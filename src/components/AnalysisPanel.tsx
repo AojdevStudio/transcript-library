@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Status = "idle" | "running" | "complete" | "failed";
 
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function AnalysisPanel({ videoId, initialStatus, initialInsight }: Props) {
+  const router = useRouter();
   const [status, setStatus] = useState<Status>(initialStatus);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,8 +40,8 @@ export function AnalysisPanel({ videoId, initialStatus, initialInsight }: Props)
 
     const elapsed = Date.now() - pollStartRef.current;
 
-    // 10-minute ceiling
-    if (elapsed > 600_000) {
+    // 6-minute ceiling (server timeout is 5 min + 1 min buffer)
+    if (elapsed > 360_000) {
       setStatus("failed");
       setError("Analysis is taking longer than expected");
       return;
@@ -52,8 +54,8 @@ export function AnalysisPanel({ videoId, initialStatus, initialInsight }: Props)
         if (data.status === "complete") {
           setStatus("complete");
           setError(null);
-          // Reload to get server-rendered insight
-          window.location.reload();
+          // Re-run server components to get the new insight
+          router.refresh();
           return;
         }
 

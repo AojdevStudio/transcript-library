@@ -4,11 +4,8 @@ import { absTranscriptPath, getVideo } from "@/lib/catalog";
 import { Markdown } from "@/components/Markdown";
 import { readInsightMarkdown } from "@/lib/insights";
 import { curateYouTubeAnalyzer } from "@/lib/curation";
+import { readStatus, isProcessAlive } from "@/lib/analysis";
 import { AnalysisPanel } from "@/components/AnalysisPanel";
-
-function dec(s: string) {
-  return decodeURIComponent(s);
-}
 
 export default async function VideoPage({
   params,
@@ -16,7 +13,7 @@ export default async function VideoPage({
   params: Promise<{ videoId: string }>;
 }) {
   const { videoId } = await params;
-  const id = dec(videoId);
+  const id = decodeURIComponent(videoId);
   const video = getVideo(id);
 
   if (!video) {
@@ -28,7 +25,17 @@ export default async function VideoPage({
   }
 
   const insight = readInsightMarkdown(video.videoId).markdown;
-  const initialStatus = insight ? "complete" as const : "idle" as const;
+  let initialStatus: "idle" | "running" | "complete" | "failed" = "idle";
+  if (insight) {
+    initialStatus = "complete";
+  } else {
+    const statusFile = readStatus(video.videoId);
+    if (statusFile?.status === "running" && isProcessAlive(statusFile.pid)) {
+      initialStatus = "running";
+    } else if (statusFile?.status === "failed") {
+      initialStatus = "failed";
+    }
+  }
   const curated = insight ? curateYouTubeAnalyzer(insight) : null;
   const youtubeUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(video.videoId)}`;
 

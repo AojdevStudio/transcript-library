@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import {
-  type AnalysisStatusResponse,
   readStatus,
   isProcessAlive,
   isValidVideoId,
@@ -12,17 +11,23 @@ import {
 
 export const runtime = "nodejs";
 
+type StatusResponse = {
+  status: "idle" | "running" | "complete" | "failed";
+  startedAt?: string;
+  error?: string;
+};
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const videoId = url.searchParams.get("videoId") || "";
 
   if (!isValidVideoId(videoId)) {
-    return NextResponse.json({ error: "invalid videoId" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid videoId" }, { status: 400 });
   }
 
   const status = readStatus(videoId);
 
-  let response: AnalysisStatusResponse;
+  let response: StatusResponse;
 
   if (status?.status === "running") {
     // Verify PID is alive
