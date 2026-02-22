@@ -45,3 +45,8 @@ next-env.d.ts
 *.pdf
 *.mov
 *.avi
+.worktrees
+
+# analysis pipeline artifacts
+data/queue/
+data/insights/*/status.json

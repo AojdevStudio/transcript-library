@@ -4,10 +4,8 @@ import { absTranscriptPath, getVideo } from "@/lib/catalog";
 import { Markdown } from "@/components/Markdown";
 import { readInsightMarkdown } from "@/lib/insights";
 import { curateYouTubeAnalyzer } from "@/lib/curation";
-
-function dec(s: string) {
-  return decodeURIComponent(s);
-}
+import { readStatus, isProcessAlive } from "@/lib/analysis";
+import { AnalysisPanel } from "@/components/AnalysisPanel";
 
 export default async function VideoPage({
   params,
@@ -15,7 +13,7 @@ export default async function VideoPage({
   params: Promise<{ videoId: string }>;
 }) {
   const { videoId } = await params;
-  const id = dec(videoId);
+  const id = decodeURIComponent(videoId);
   const video = getVideo(id);
 
   if (!video) {
@@ -27,6 +25,17 @@ export default async function VideoPage({
   }
 
   const insight = readInsightMarkdown(video.videoId).markdown;
+  let initialStatus: "idle" | "running" | "complete" | "failed" = "idle";
+  if (insight) {
+    initialStatus = "complete";
+  } else {
+    const statusFile = readStatus(video.videoId);
+    if (statusFile?.status === "running" && isProcessAlive(statusFile.pid)) {
+      initialStatus = "running";
+    } else if (statusFile?.status === "failed") {
+      initialStatus = "failed";
+    }
+  }
   const curated = insight ? curateYouTubeAnalyzer(insight) : null;
   const youtubeUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(video.videoId)}`;
 
@@ -53,21 +62,16 @@ export default async function VideoPage({
               <a
                 href={youtubeUrl}
                 target="_blank"
+                rel="noopener noreferrer"
                 className="rounded-full border border-black/10 bg-white px-4 py-2 text-sm"
               >
                 Open YouTube
               </a>
-              <form
-                action={`/api/analyze?videoId=${encodeURIComponent(video.videoId)}`}
-                method="post"
-              >
-                <button
-                  type="submit"
-                  className="rounded-full bg-black px-4 py-2 text-sm text-white hover:bg-black/90"
-                >
-                  Run analysis
-                </button>
-              </form>
+              <AnalysisPanel
+                videoId={video.videoId}
+                initialStatus={initialStatus}
+                initialInsight={insight}
+              />
             </div>
           </div>
 
@@ -144,7 +148,7 @@ export default async function VideoPage({
                   </div>
                 ) : (
                   <div className="text-sm text-[var(--muted)]">
-                    No analysis yet. Run it and refresh this page.
+                    No analysis yet. Click &quot;Run analysis&quot; to generate insights.
                   </div>
                 )}
               </div>

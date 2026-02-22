@@ -1,26 +1,28 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
+import path from "node:path";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const p = url.searchParams.get("path");
-  if (!p) return NextResponse.json({ error: "missing path" }, { status: 400 });
+  if (!p) return NextResponse.json({ ok: false, error: "missing path" }, { status: 400 });
 
-  // Minimal safety: only allow reading inside the playlist-transcripts repo.
+  // Safety: resolve to canonical paths to prevent path traversal attacks.
   const root = process.env.PLAYLIST_TRANSCRIPTS_REPO || "/Users/aojdevstudio/projects/clawd/playlist-transcripts";
-  if (!p.startsWith(root)) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const resolved = path.resolve(root, p);
+  if (!resolved.startsWith(path.resolve(root) + path.sep)) {
+    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
 
   try {
-    const content = fs.readFileSync(p, "utf8");
+    const content = fs.readFileSync(resolved, "utf8");
     return new NextResponse(content, {
       headers: { "content-type": "text/plain; charset=utf-8" },
     });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ error: "read failed", detail: msg }, { status: 500 });
+    console.error("raw route read failed:", e);
+    return NextResponse.json({ ok: false, error: "read failed" }, { status: 500 });
   }
 }

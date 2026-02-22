@@ -1,13 +1,13 @@
 import fs from "node:fs";
-import path from "node:path";
+import { insightDir, analysisPath, insightsBaseDir } from "@/lib/analysis";
 import { curateYouTubeAnalyzer } from "@/lib/curation";
 
 export function insightPaths(videoId: string) {
-  const baseDir = path.join(process.cwd(), "data", "insights", videoId);
+  const dir = insightDir(videoId);
   return {
-    dir: baseDir,
-    analysis: path.join(baseDir, "analysis.md"),
-    legacy: path.join(process.cwd(), "data", "insights", `${videoId}.md`),
+    dir,
+    analysis: analysisPath(videoId),
+    legacy: `${insightsBaseDir()}/${videoId}.md`,
   };
 }
 

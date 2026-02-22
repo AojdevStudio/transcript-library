@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { listKnowledgeCategories, KNOWLEDGE_ROOT, titleFromRelPath } from "@/lib/knowledge";
+import { insightsBaseDir, analysisPath } from "@/lib/analysis";
 
 export type RecentKnowledgeItem = {
   category: string;
@@ -60,7 +61,7 @@ export type RecentInsightItem = {
 };
 
 export function listRecentInsights(limit = 8): RecentInsightItem[] {
-  const base = path.join(process.cwd(), "data", "insights");
+  const base = insightsBaseDir();
   try {
     const entries = fs.readdirSync(base, { withFileTypes: true });
     const items: RecentInsightItem[] = [];
@@ -68,7 +69,7 @@ export function listRecentInsights(limit = 8): RecentInsightItem[] {
     for (const e of entries) {
       if (!e.isDirectory()) continue;
       if (e.name.startsWith(".")) continue;
-      const analysis = path.join(base, e.name, "analysis.md");
+      const analysis = analysisPath(e.name);
       if (!fs.existsSync(analysis)) continue;
       try {
         const st = fs.statSync(analysis);
