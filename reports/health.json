@@ -1,6 +1,6 @@
 {
   "timestamp": "2026-03-06T02:28:00Z",
-  "repo_path": "/Users/openclaw-ekene/.openclaw/workspace/transcript-library",
+  "repo_path": ".",
   "classified_framework": "feature-based + ops-docs boundary (hybrid)",
   "framework_fit": "HIGH",
   "visibility": "public",

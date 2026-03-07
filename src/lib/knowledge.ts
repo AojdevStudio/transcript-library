@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export const KNOWLEDGE_ROOT = path.join(process.cwd(), "knowledge");
+const KNOWLEDGE_ROOT = path.join(process.cwd(), "knowledge");
 
 function isSafeSegment(s: string) {
   // disallow traversal + weird separators
@@ -77,7 +77,7 @@ export function listKnowledgeMarkdown(category: string): string[] {
   }
 }
 
-export function readKnowledgeMarkdown(category: string, relPath: string): string | null {
+function resolveKnowledgeMarkdownPath(category: string, relPath: string): string | null {
   if (!isSafeSegment(category)) return null;
   // relPath can contain subfolders, but must not traverse.
   const cleaned = relPath.replace(/\\/g, "/");
@@ -88,6 +88,25 @@ export function readKnowledgeMarkdown(category: string, relPath: string): string
   const catRoot = path.join(KNOWLEDGE_ROOT, category) + path.sep;
   const resolved = path.resolve(abs);
   if (!resolved.startsWith(path.resolve(catRoot))) return null;
+
+  return resolved;
+}
+
+export function knowledgeMarkdownMtime(category: string, relPath: string): number | null {
+  const resolved = resolveKnowledgeMarkdownPath(category, relPath);
+  if (!resolved) return null;
+
+  try {
+    if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) return null;
+    return fs.statSync(resolved).mtimeMs;
+  } catch {
+    return null;
+  }
+}
+
+export function readKnowledgeMarkdown(category: string, relPath: string): string | null {
+  const resolved = resolveKnowledgeMarkdownPath(category, relPath);
+  if (!resolved) return null;
 
   try {
     if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) return null;

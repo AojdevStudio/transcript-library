@@ -7,6 +7,7 @@
  * - listKnowledgeCategories()
  * - curatedKnowledgeCategories(all)
  * - listKnowledgeMarkdown(category)
+ * - knowledgeMarkdownMtime(category, relPath)
  * - readKnowledgeMarkdown(category, relPath)
  * - titleFromRelPath(relPath)
  *
@@ -24,7 +25,7 @@ export {
   listKnowledgeCategories,
   curatedKnowledgeCategories,
   listKnowledgeMarkdown,
+  knowledgeMarkdownMtime,
   readKnowledgeMarkdown,
   titleFromRelPath,
-  KNOWLEDGE_ROOT,
 } from "@/lib/knowledge";
