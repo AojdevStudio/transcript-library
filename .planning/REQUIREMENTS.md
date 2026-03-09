@@ -75,43 +75,43 @@
 
 ## Traceability
 
-| Requirement | Phase | Status  |
-| ----------- | ----- | ------- |
-| DEPLOY-01   | TBD   | Pending |
-| DEPLOY-02   | TBD   | Pending |
-| DEPLOY-03   | TBD   | Pending |
-| ANLY-01     | TBD   | Pending |
-| ANLY-02     | TBD   | Pending |
-| ANLY-03     | TBD   | Pending |
-| ANLY-04     | TBD   | Pending |
-| CAT-01      | TBD   | Pending |
-| CAT-02      | TBD   | Pending |
-| CAT-03      | TBD   | Pending |
-| CAT-04      | TBD   | Pending |
-| RUN-01      | TBD   | Pending |
-| RUN-02      | TBD   | Pending |
-| RUN-03      | TBD   | Pending |
-| RUN-04      | TBD   | Pending |
-| SAFE-01     | TBD   | Pending |
-| SAFE-02     | TBD   | Pending |
-| SAFE-03     | TBD   | Pending |
-| SAFE-04     | TBD   | Pending |
-| PERF-01     | TBD   | Pending |
-| PERF-02     | TBD   | Pending |
-| PERF-03     | TBD   | Pending |
-| PERF-04     | TBD   | Pending |
-| TEST-01     | TBD   | Pending |
-| TEST-02     | TBD   | Pending |
-| TEST-03     | TBD   | Pending |
-| TEST-04     | TBD   | Pending |
+| Requirement | Phase   | Status  |
+| ----------- | ------- | ------- |
+| DEPLOY-01   | Phase 1 | Pending |
+| DEPLOY-02   | Phase 1 | Pending |
+| DEPLOY-03   | Phase 4 | Pending |
+| ANLY-01     | Phase 1 | Pending |
+| ANLY-02     | Phase 1 | Pending |
+| ANLY-03     | Phase 1 | Pending |
+| ANLY-04     | Phase 1 | Pending |
+| CAT-01      | Phase 2 | Pending |
+| CAT-02      | Phase 2 | Pending |
+| CAT-03      | Phase 2 | Pending |
+| CAT-04      | Phase 2 | Pending |
+| RUN-01      | Phase 3 | Pending |
+| RUN-02      | Phase 3 | Pending |
+| RUN-03      | Phase 3 | Pending |
+| RUN-04      | Phase 3 | Pending |
+| SAFE-01     | Phase 4 | Pending |
+| SAFE-02     | Phase 3 | Pending |
+| SAFE-03     | Phase 1 | Pending |
+| SAFE-04     | Phase 2 | Pending |
+| PERF-01     | Phase 2 | Pending |
+| PERF-02     | Phase 4 | Pending |
+| PERF-03     | Phase 3 | Pending |
+| PERF-04     | Phase 2 | Pending |
+| TEST-01     | Phase 1 | Pending |
+| TEST-02     | Phase 1 | Pending |
+| TEST-03     | Phase 2 | Pending |
+| TEST-04     | Phase 3 | Pending |
 
 **Coverage:**
 
 - v1 requirements: 27 total
-- Mapped to phases: 0
-- Unmapped: 27 ⚠️
+- Mapped to phases: 27
+- Unmapped: 0 ✓
 
 ---
 
 _Requirements defined: 2026-03-09_
-_Last updated: 2026-03-09 after initial definition_
+_Last updated: 2026-03-09 after roadmap creation_
