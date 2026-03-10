@@ -84,7 +84,7 @@ export type ChannelSummary = {
  * @throws {Error} If `PLAYLIST_TRANSCRIPTS_REPO` is not set
  * @internal
  */
-function repoRoot(): string {
+export function playlistTranscriptsRepoRoot(): string {
   const repo = process.env.PLAYLIST_TRANSCRIPTS_REPO;
   if (!repo) {
     throw new Error(
@@ -99,8 +99,8 @@ function repoRoot(): string {
  * @returns {string} Path to `youtube-transcripts/index/videos.csv`
  * @internal
  */
-function csvPath(): string {
-  return path.join(repoRoot(), "youtube-transcripts", "index", "videos.csv");
+export function catalogCsvPath(): string {
+  return path.join(playlistTranscriptsRepoRoot(), "youtube-transcripts", "index", "videos.csv");
 }
 
 /**
@@ -151,7 +151,7 @@ let _cache:
  * @returns {VideoRow[]} All rows from the CSV index
  */
 export function readVideoRows(): VideoRow[] {
-  const p = csvPath();
+  const p = catalogCsvPath();
   const st = fs.statSync(p);
   if (_cache && _cache.mtimeMs === st.mtimeMs) return _cache.rows;
 
@@ -200,7 +200,7 @@ let _videosCache:
  */
 export function groupVideos(rows?: VideoRow[]): Map<string, Video> {
   // Return cached map if CSV hasn't changed
-  const p = csvPath();
+  const p = catalogCsvPath();
   const st = fs.statSync(p);
   if (_videosCache && _videosCache.mtimeMs === st.mtimeMs) return _videosCache.map;
 
@@ -314,5 +314,5 @@ export function getVideo(videoId: string): Video | undefined {
  * @returns {string} Absolute path to the transcript file
  */
 export function absTranscriptPath(filePath: string): string {
-  return path.join(repoRoot(), "youtube-transcripts", filePath);
+  return path.join(playlistTranscriptsRepoRoot(), "youtube-transcripts", filePath);
 }

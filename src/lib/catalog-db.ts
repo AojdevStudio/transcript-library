@@ -16,7 +16,8 @@ export function catalogDbPath(): string {
 export function openCatalogDb(filePath = catalogDbPath()): CatalogDatabase {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   const db = new Database(filePath);
-  db.pragma("journal_mode = WAL");
+  // Keep the catalog snapshot as a single file so rebuilds can publish via one atomic rename.
+  db.pragma("journal_mode = DELETE");
   db.pragma("foreign_keys = ON");
   return db;
 }
