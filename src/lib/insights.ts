@@ -209,6 +209,7 @@ export function getInsightArtifacts(videoId: string): {
   stderrFileName: string;
 } {
   const dir = insightDir(videoId);
+  const run = readRunMetadata(videoId);
   let displayPath: string | null = null;
 
   try {
@@ -227,12 +228,16 @@ export function getInsightArtifacts(videoId: string): {
   const canonicalPath = analysisPath(videoId);
   const metaPath = metadataCachePath(videoId);
   const runPath = runMetadataPath(videoId);
-  const outPath = fs.existsSync(stdoutLogPath(videoId))
-    ? stdoutLogPath(videoId)
-    : legacyStdoutLogPath(videoId);
-  const errPath = fs.existsSync(stderrLogPath(videoId))
-    ? stderrLogPath(videoId)
-    : legacyStderrLogPath(videoId);
+  const outPath = run?.artifacts.stdoutFileName
+    ? path.join(dir, run.artifacts.stdoutFileName)
+    : fs.existsSync(stdoutLogPath(videoId))
+      ? stdoutLogPath(videoId)
+      : legacyStdoutLogPath(videoId);
+  const errPath = run?.artifacts.stderrFileName
+    ? path.join(dir, run.artifacts.stderrFileName)
+    : fs.existsSync(stderrLogPath(videoId))
+      ? stderrLogPath(videoId)
+      : legacyStderrLogPath(videoId);
 
   return {
     canonicalPath,

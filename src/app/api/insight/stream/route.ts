@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { isProcessAlive, isValidVideoId, readStatus } from "@/modules/analysis";
-import { getInsightArtifacts, readInsightLogTail, readRunMetadata } from "@/modules/insights";
+import { isValidVideoId, readRuntimeSnapshot } from "@/modules/analysis";
+import { getInsightArtifacts, readInsightLogTail } from "@/modules/insights";
 
 export const runtime = "nodejs";
 
@@ -14,21 +14,18 @@ export const runtime = "nodejs";
  *   `artifacts`, and `run` fields.
  */
 function toPayload(videoId: string) {
-  const status = readStatus(videoId);
+  const snapshot = readRuntimeSnapshot(videoId);
   const logs = readInsightLogTail(videoId);
-  const state =
-    status?.status === "running" && status.pid && !isProcessAlive(status.pid)
-      ? "failed"
-      : (status?.status ?? "idle");
 
   return {
-    status: state,
-    startedAt: status?.startedAt ?? null,
-    completedAt: status?.completedAt ?? null,
-    error: status?.error ?? null,
+    status: snapshot.status,
+    lifecycle: snapshot.lifecycle,
+    startedAt: snapshot.startedAt,
+    completedAt: snapshot.completedAt,
+    error: snapshot.error,
     logs,
     artifacts: getInsightArtifacts(videoId),
-    run: readRunMetadata(videoId),
+    run: snapshot.run,
   };
 }
 

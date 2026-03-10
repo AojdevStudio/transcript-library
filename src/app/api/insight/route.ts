@@ -1,19 +1,10 @@
 import { NextResponse } from "next/server";
-import fs from "node:fs";
-import {
-  analysisPath,
-  atomicWriteJson,
-  isProcessAlive,
-  isValidVideoId,
-  readStatus,
-  statusPath,
-} from "@/modules/analysis";
+import { isValidVideoId, readRuntimeSnapshot, type RunLifecycle } from "@/modules/analysis";
 import {
   getInsightArtifacts,
   hasBlockedLegacyInsight,
   readCuratedInsight,
   readInsightMarkdown,
-  readRunMetadata,
 } from "@/modules/insights";
 
 export const runtime = "nodejs";
@@ -21,9 +12,8 @@ export const runtime = "nodejs";
 /**
  * GET /api/insight
  * Returns the full insight state for a video: derived status, markdown content,
- * curated structured data, artifact file list, and run metadata.
- * Reconciles a stale "running" status by writing a "failed" tombstone when the
- * worker process is no longer alive.
+ * curated structured data, artifact file list, and durable latest-run metadata.
+ * Restart reconciliation is delegated to the shared runtime layer.
  *
  * @param req - Incoming request. Expects `?videoId=` query param.
  * @returns JSON with `{ status, error?, insight, curated, artifacts, run }`, or a
@@ -39,52 +29,33 @@ export async function GET(req: Request) {
 
   const insight = readInsightMarkdown(videoId).markdown;
   const curated = readCuratedInsight(videoId);
-  const status = readStatus(videoId);
+  const snapshot = readRuntimeSnapshot(videoId);
   const blockedLegacyInsight = hasBlockedLegacyInsight(videoId);
 
-  let state: "idle" | "running" | "complete" | "failed" = insight ? "complete" : "idle";
-  let error: string | undefined = curated.error ?? undefined;
+  let state: "idle" | "running" | "complete" | "failed" =
+    snapshot.status === "idle" && insight ? "complete" : snapshot.status;
+  let error: string | undefined = snapshot.error ?? curated.error ?? undefined;
+  let lifecycle: RunLifecycle | null = snapshot.lifecycle;
 
   if (blockedLegacyInsight) {
     state = "failed";
+    lifecycle = lifecycle ?? "failed";
     error =
       "Legacy insight requires one-time migration. Run node scripts/migrate-legacy-insights-to-json.ts --check, then rerun without --check to upgrade remaining artifacts.";
   } else if (curated.error) {
     state = "failed";
-  } else if (status?.status === "running") {
-    if (!isProcessAlive(status.pid)) {
-      const updated = {
-        ...status,
-        status: "failed" as const,
-        completedAt: new Date().toISOString(),
-        error: "process died unexpectedly",
-      };
-      atomicWriteJson(statusPath(videoId), updated);
-      state = "failed";
-      error = updated.error;
-    } else {
-      state = "running";
-    }
-  } else if (status?.status === "failed") {
-    state = "failed";
-    error = status.error;
-  } else if (!insight) {
-    try {
-      fs.accessSync(analysisPath(videoId));
-      state = "complete";
-    } catch {
-      state = "idle";
-    }
+    lifecycle = lifecycle ?? "failed";
   }
 
   return NextResponse.json(
     {
       status: state,
+      lifecycle,
       error,
       insight,
       curated: curated.curated,
       artifacts: getInsightArtifacts(videoId),
-      run: readRunMetadata(videoId),
+      run: snapshot.run,
     },
     { headers: { "Cache-Control": "no-store" } },
   );

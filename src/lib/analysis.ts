@@ -45,6 +45,8 @@ export type RunLifecycle =
   | "interrupted"
   | "reconciled";
 
+export type RuntimeState = "idle" | "running" | "complete" | "failed";
+
 /**
  * Status file written to `status.json` for each analysis run.
  * Keeps the legacy `status` field while publishing the richer lifecycle state.
@@ -114,6 +116,15 @@ export type RunFile = {
   reconciledAt?: string;
   reconciliationReason?: string;
   artifacts: RunArtifacts;
+};
+
+export type RuntimeSnapshot = {
+  status: RuntimeState;
+  lifecycle: RunLifecycle | null;
+  run: RunFile | null;
+  startedAt: string | null;
+  completedAt: string | null;
+  error: string | null;
 };
 
 type ProviderSpec = {
@@ -642,6 +653,30 @@ export function reconcileLatestRun(
     reconciledAt: options?.now ?? nowIso(),
     reconciliationReason: options?.reason ?? "worker missing after restart",
   });
+}
+
+export function readRuntimeSnapshot(videoId: string): RuntimeSnapshot {
+  const run = reconcileLatestRun(videoId);
+  if (!run) {
+    return {
+      status: hasAnalysisArtifacts(videoId) ? "complete" : "idle",
+      lifecycle: null,
+      run: null,
+      startedAt: null,
+      completedAt: null,
+      error: null,
+    };
+  }
+
+  return {
+    status:
+      run.status === "running" ? "running" : run.status === "complete" ? "complete" : "failed",
+    lifecycle: run.lifecycle,
+    run,
+    startedAt: run.startedAt,
+    completedAt: run.completedAt ?? null,
+    error: run.error ?? null,
+  };
 }
 
 export function __resetAnalysisRuntimeForTests(): void {
