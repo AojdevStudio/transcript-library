@@ -59,12 +59,12 @@ The transcript is already there. The AI tooling already exists. The only missing
 
 Transcript Library is a private internal tool for a small group of friends built around a shared YouTube playlist.
 
-| Layer         | What It Does                                                           |
-| :------------ | :--------------------------------------------------------------------- |
-| **Catalog**   | Reads transcript metadata from a local `playlist-transcripts` repo     |
-| **Player**    | Embeds the YouTube video in-app — no tab switching                     |
-| **Analysis**  | Runs AI synthesis headlessly via `claude` CLI or `codex` CLI           |
-| **Knowledge** | Stores markdown notes alongside video insights for long-term reference |
+| Layer         | What It Does                                                                   |
+| :------------ | :----------------------------------------------------------------------------- |
+| **Catalog**   | Refreshes a local SQLite catalog from the transcript repo for all browse reads |
+| **Player**    | Embeds the YouTube video in-app — no tab switching                             |
+| **Analysis**  | Runs AI synthesis headlessly via `claude` CLI or `codex` CLI                   |
+| **Knowledge** | Stores markdown notes alongside video insights for long-term reference         |
 
 This is not a SaaS product. It is a proof of concept for a trusted group that already has access to Claude and ChatGPT tooling.
 
@@ -156,6 +156,7 @@ PLAYLIST_TRANSCRIPTS_REPO=/absolute/path/to/playlist-transcripts
 # Optional
 ANALYSIS_PROVIDER=claude-cli
 INSIGHTS_BASE_DIR=/srv/transcript-library/insights   # hosted deploys
+CATALOG_DB_PATH=/srv/transcript-library/catalog/catalog.db
 ```
 
 ### Run
@@ -196,6 +197,26 @@ Legacy markdown-only artifacts are supported only during the one-time migration 
 can check migration completion with `node scripts/migrate-legacy-insights-to-json.ts --check` and
 complete the upgrade by rerunning the script without `--check`.
 
+### Catalog Refresh Contract
+
+Browse reads are SQLite-only after Phase 2. The app keeps the live catalog at
+`data/catalog/catalog.db` by default and writes the latest import report to
+`data/catalog/last-import-validation.json` unless `CATALOG_DB_PATH` points somewhere else.
+
+```bash
+node scripts/rebuild-catalog.ts
+node scripts/rebuild-catalog.ts --check
+```
+
+- `node scripts/rebuild-catalog.ts` rebuilds a temp SQLite snapshot, validates it, and atomically
+  swaps it into place only when the import passes.
+- `node scripts/rebuild-catalog.ts --check` runs the same validation gate without replacing the live
+  DB, while still updating `last-import-validation.json` for operator review.
+- A failed validation leaves the last known-good `catalog.db` in place. The app does not fall back
+  to `videos.csv` at runtime anymore.
+- `POST /api/sync-hook` and `scripts/nightly-insights.ts` both refresh SQLite before reading browse
+  metadata, so operational automation and the app use the same catalog authority.
+
 ### Provider Abstraction
 
 Analysis runs through a thin provider boundary. Swap `ANALYSIS_PROVIDER` to switch between `claude-cli` and `codex-cli` — no UI changes, no redeployment.
@@ -227,6 +248,7 @@ just build            # Next.js build
 just lint             # ESLint
 just typecheck        # tsc --noEmit
 just backfill-insights  # Re-run analysis for existing videos
+node scripts/rebuild-catalog.ts --check  # Validate catalog parity without cutover
 ```
 
 ---
