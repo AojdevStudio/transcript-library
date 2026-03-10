@@ -31,6 +31,8 @@ try {
         status: args.has("--check") ? "validated" : "rebuilt",
         csvPath: result.csvPath,
         liveDbPath: result.liveDbPath,
+        validationReportPath: result.validationReportPath,
+        catalogVersion: result.catalogVersion,
         videoCount: result.videoCount,
         partCount: result.partCount,
       },

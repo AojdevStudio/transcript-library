@@ -81,8 +81,8 @@ describe("catalog sqlite importer", () => {
           "2026-02-02",
           "2026-02-03",
           "1200",
-          "1",
-          "1",
+          "",
+          "",
           "single/solo123.md",
         ].join(","),
         [
@@ -111,6 +111,84 @@ describe("catalog sqlite importer", () => {
           "2",
           "multi/part-1.md",
         ].join(","),
+        [
+          "dup-part-1a",
+          "multi-dup",
+          "Duplicate Multipart",
+          "Channel Duplicate",
+          "ops",
+          "2026-02-09",
+          "2026-02-10",
+          "150",
+          "1",
+          "2",
+          "dup/part-1-a.md",
+        ].join(","),
+        [
+          "dup-part-2a",
+          "multi-dup",
+          "Duplicate Multipart",
+          "Channel Duplicate",
+          "ops",
+          "2026-02-09",
+          "2026-02-10",
+          "175",
+          "2",
+          "2",
+          "dup/part-2-a.md",
+        ].join(","),
+        [
+          "dup-part-1b",
+          "multi-dup",
+          "Duplicate Multipart",
+          "Channel Duplicate",
+          "ops",
+          "2026-02-09",
+          "2026-02-10",
+          "150",
+          "1",
+          "2",
+          "dup/part-1-b.md",
+        ].join(","),
+        [
+          "dup-part-2b",
+          "multi-dup",
+          "Duplicate Multipart",
+          "Channel Duplicate",
+          "ops",
+          "2026-02-09",
+          "2026-02-10",
+          "175",
+          "2",
+          "2",
+          "dup/part-2-b.md",
+        ].join(","),
+        [
+          "dup-topic-1",
+          "topicdup111",
+          "Topic Duplicate",
+          "Channel Topics",
+          "ai",
+          "2026-02-07",
+          "2026-02-08",
+          "275",
+          "",
+          "",
+          "topics/ai/topic-duplicate.md",
+        ].join(","),
+        [
+          "dup-topic-2",
+          "topicdup111",
+          "Topic Duplicate",
+          "Channel Topics",
+          "business",
+          "2026-02-07",
+          "2026-02-08",
+          "275",
+          "",
+          "",
+          "topics/business/topic-duplicate.md",
+        ].join(","),
         ["blank777", "", "", "", "", "", "", "275", "1", "1", "missing/meta.md"].join(","),
       ].join("\n"),
     );
@@ -119,8 +197,8 @@ describe("catalog sqlite importer", () => {
     const db = bootstrapCatalogDb(liveDbPath);
 
     try {
-      expect(result.videoCount).toBe(3);
-      expect(result.partCount).toBe(4);
+      expect(result.videoCount).toBe(5);
+      expect(result.partCount).toBe(7);
 
       const placeholder = db
         .prepare(
@@ -156,6 +234,18 @@ describe("catalog sqlite importer", () => {
         source_row_count: 2,
       });
 
+      const single = db
+        .prepare(
+          `
+            SELECT total_chunks
+            FROM catalog_videos
+            WHERE video_id = ?
+          `,
+        )
+        .get("solo123") as Record<string, number>;
+
+      expect(single).toEqual({ total_chunks: 1 });
+
       const parts = db
         .prepare(
           `
@@ -170,6 +260,37 @@ describe("catalog sqlite importer", () => {
       expect(parts).toEqual([
         { chunk_index: 1, file_path: "multi/part-1.md" },
         { chunk_index: 2, file_path: "multi/part-2.md" },
+      ]);
+
+      const duplicateTopic = db
+        .prepare(
+          `
+            SELECT total_chunks, source_row_count
+            FROM catalog_videos
+            WHERE video_id = ?
+          `,
+        )
+        .get("topicdup111") as Record<string, number>;
+
+      expect(duplicateTopic).toEqual({
+        total_chunks: 1,
+        source_row_count: 2,
+      });
+
+      const duplicateMultipartParts = db
+        .prepare(
+          `
+            SELECT chunk_index, file_path
+            FROM catalog_parts
+            WHERE video_id = ?
+            ORDER BY chunk_index ASC
+          `,
+        )
+        .all("multi-dup") as Array<{ chunk_index: number; file_path: string }>;
+
+      expect(duplicateMultipartParts).toEqual([
+        { chunk_index: 1, file_path: "dup/part-1-a.md" },
+        { chunk_index: 2, file_path: "dup/part-2-a.md" },
       ]);
     } finally {
       db.close();
@@ -239,7 +360,7 @@ describe("catalog sqlite importer", () => {
     rebuildCatalogFromCsv({ csvPath: goodCsvPath, liveDbPath });
 
     expect(() => rebuildCatalogFromCsv({ csvPath: badCsvPath, liveDbPath })).toThrow(
-      /duplicate chunk/i,
+      /expected 2 parts/i,
     );
 
     const db = bootstrapCatalogDb(liveDbPath);

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { rebuildCatalogFromCsv } from "@/lib/catalog-import";
+import { catalogValidationReportPath, rebuildCatalogFromCsv } from "@/lib/catalog-import";
 
 const catalogCsvHeader = [
   "video_id",
@@ -38,6 +38,15 @@ describe("catalog importer validation", () => {
       }),
     ).toThrow(/missing canonical video id/i);
 
+    const report = JSON.parse(
+      fs.readFileSync(catalogValidationReportPath(path.join(tempRoot, "catalog.db")), "utf8"),
+    );
+    expect(report.valid).toBe(false);
+    expect(report.summary.missingCanonicalVideoIds).toEqual(["row-2"]);
+    expect(report.malformedRows).toEqual([
+      { rowNumber: 2, videoId: "<missing>", issue: "missing canonical video id" },
+    ]);
+
     fs.rmSync(tempRoot, { recursive: true, force: true });
   });
 
@@ -66,6 +75,16 @@ describe("catalog importer validation", () => {
       }),
     ).toThrow(/chunk index|file path/i);
 
+    const report = JSON.parse(
+      fs.readFileSync(catalogValidationReportPath(path.join(tempRoot, "catalog.db")), "utf8"),
+    );
+    expect(report.valid).toBe(false);
+    expect(report.summary.malformedRowCount).toBe(2);
+    expect(report.malformedRows).toEqual([
+      { rowNumber: 2, videoId: "video123", issue: "missing transcript file path" },
+      { rowNumber: 2, videoId: "video123", issue: "invalid chunk index: 0" },
+    ]);
+
     fs.rmSync(tempRoot, { recursive: true, force: true });
   });
 
@@ -93,6 +112,15 @@ describe("catalog importer validation", () => {
         liveDbPath: path.join(tempRoot, "catalog.db"),
       }),
     ).toThrow(/expected 3 parts/i);
+
+    const report = JSON.parse(
+      fs.readFileSync(catalogValidationReportPath(path.join(tempRoot, "catalog.db")), "utf8"),
+    );
+    expect(report.valid).toBe(false);
+    expect(report.parity.transcriptPartCountMatches).toBe(false);
+    expect(report.errors).toContain(
+      "Catalog row group for video123 expected 3 parts but imported 1",
+    );
 
     fs.rmSync(tempRoot, { recursive: true, force: true });
   });
