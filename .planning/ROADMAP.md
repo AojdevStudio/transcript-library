@@ -52,7 +52,7 @@ Plans:
 
 Plans:
 
-- [ ] 02-01: Design SQLite schema and import path for catalog metadata
+- [x] 02-01: Design SQLite schema and import path for catalog metadata
 - [ ] 02-02: Swap home, channel, and video metadata reads to SQLite-backed repositories
 - [ ] 02-03: Add parity checks, validation, and caching/revalidation for hot catalog paths
 
@@ -100,6 +100,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase                   | Plans Complete | Status      | Completed  |
 | ----------------------- | -------------- | ----------- | ---------- |
 | 1. Artifact Foundations | 3/3            | Complete    | 2026-03-09 |
-| 2. SQLite Catalog       | 0/3            | Not started | -          |
+| 2. SQLite Catalog       | 1/3            | In Progress | -          |
 | 3. Durable Runtime      | 0/3            | Not started | -          |
 | 4. Hosted Hardening     | 0/2            | Not started | -          |

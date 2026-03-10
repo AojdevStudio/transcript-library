@@ -20,10 +20,10 @@
 
 ### Catalog And Query Performance
 
-- [ ] **CAT-01**: Catalog metadata is stored in SQLite instead of requiring synchronous `videos.csv` parsing on hot request paths
+- [x] **CAT-01**: Catalog metadata is stored in SQLite instead of requiring synchronous `videos.csv` parsing on hot request paths
 - [ ] **CAT-02**: Home and channel pages load their catalog data through indexed queries that scale cleanly to at least the project’s near-term catalog size
 - [ ] **CAT-03**: Video lookup by `videoId`, channel grouping, and transcript-part ordering remain correct after the catalog migration
-- [ ] **CAT-04**: Catalog migration includes validation or parity checks that catch differences between the old CSV behavior and the new SQLite-backed behavior before the old path is removed
+- [x] **CAT-04**: Catalog migration includes validation or parity checks that catch differences between the old CSV behavior and the new SQLite-backed behavior before the old path is removed
 
 ### Runtime Durability And Observability
 
@@ -37,7 +37,7 @@
 - [ ] **SAFE-01**: Internal API routes that expose transcripts, artifacts, or local path-derived data are protected appropriately for the private hosted deployment model
 - [ ] **SAFE-02**: Webhook-triggered batch analysis has stronger abuse resistance through improved validation, replay protection, or equivalent safeguards appropriate to the deployment
 - [x] **SAFE-03**: Lower-level path and artifact helpers enforce safe `videoId` and path-construction rules so internal refactors do not bypass validation accidentally
-- [ ] **SAFE-04**: Catalog, artifact, and structured analysis inputs are validated consistently enough that malformed data fails loudly instead of degrading silently
+- [x] **SAFE-04**: Catalog and SQLite-backed browse inputs are validated consistently enough that malformed data fails loudly instead of degrading silently
 
 ### Performance And Scale Hygiene
 
@@ -50,7 +50,7 @@
 
 - [x] **TEST-01**: Automated tests cover the configurable insights base directory behavior and insight path resolution
 - [x] **TEST-02**: Automated tests cover the structured analysis parser/contract and compatibility fallbacks
-- [ ] **TEST-03**: Automated tests cover SQLite-backed catalog reads and migration parity for representative catalog cases
+- [x] **TEST-03**: Automated tests cover SQLite-backed catalog reads and migration parity for representative catalog cases
 - [ ] **TEST-04**: Automated tests cover critical runtime lifecycle paths such as status transitions, sync behavior, and artifact reconciliation
 
 ## v2 Requirements
@@ -84,10 +84,10 @@
 | ANLY-02     | Phase 1 | Complete |
 | ANLY-03     | Phase 1 | Complete |
 | ANLY-04     | Phase 1 | Complete |
-| CAT-01      | Phase 2 | Pending  |
+| CAT-01      | Phase 2 | Complete |
 | CAT-02      | Phase 2 | Pending  |
 | CAT-03      | Phase 2 | Pending  |
-| CAT-04      | Phase 2 | Pending  |
+| CAT-04      | Phase 2 | Complete |
 | RUN-01      | Phase 3 | Pending  |
 | RUN-02      | Phase 3 | Pending  |
 | RUN-03      | Phase 3 | Pending  |
@@ -95,14 +95,14 @@
 | SAFE-01     | Phase 4 | Pending  |
 | SAFE-02     | Phase 3 | Pending  |
 | SAFE-03     | Phase 1 | Complete |
-| SAFE-04     | Phase 2 | Pending  |
+| SAFE-04     | Phase 2 | Complete |
 | PERF-01     | Phase 2 | Pending  |
 | PERF-02     | Phase 4 | Pending  |
 | PERF-03     | Phase 3 | Pending  |
 | PERF-04     | Phase 2 | Pending  |
 | TEST-01     | Phase 1 | Complete |
 | TEST-02     | Phase 1 | Complete |
-| TEST-03     | Phase 2 | Pending  |
+| TEST-03     | Phase 2 | Complete |
 | TEST-04     | Phase 3 | Pending  |
 
 **Coverage:**
