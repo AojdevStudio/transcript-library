@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import fs from "node:fs";
 import { absTranscriptPath, getVideo } from "@/modules/catalog";
 import { getAnalyzeStartEligibility, isValidVideoId, spawnAnalysis } from "@/modules/analysis";
+import { reconcileRuntimeArtifacts } from "@/lib/runtime-reconciliation";
 
 export const runtime = "nodejs";
 
@@ -30,17 +31,25 @@ export async function POST(req: Request) {
   }
 
   const eligibility = getAnalyzeStartEligibility(videoId);
+  const reconciliation = reconcileRuntimeArtifacts(videoId);
   if (!eligibility.canStart) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: eligibility.message,
-        outcome: eligibility.outcome,
-        retryable: eligibility.retryable,
-        lifecycle: eligibility.snapshot.lifecycle,
-      },
-      { status: 409 },
-    );
+    if (eligibility.outcome === "already-analyzed" && reconciliation.status === "mismatch") {
+      // Allow clean reruns when durable reconciliation marks the latest artifacts as inconsistent.
+    } else {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            reconciliation.status === "mismatch"
+              ? (reconciliation.reasons[0]?.message ?? eligibility.message)
+              : eligibility.message,
+          outcome: reconciliation.status === "mismatch" ? "retry-needed" : eligibility.outcome,
+          retryable: reconciliation.status === "mismatch" || eligibility.retryable,
+          lifecycle: eligibility.snapshot.lifecycle,
+        },
+        { status: 409 },
+      );
+    }
   }
 
   // Build transcript content

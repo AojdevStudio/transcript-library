@@ -5,6 +5,7 @@ import {
   readRuntimeSnapshot,
   type RunLifecycle,
 } from "@/modules/analysis";
+import { reconcileRuntimeArtifacts } from "@/lib/runtime-reconciliation";
 import {
   getInsightArtifacts,
   hasBlockedLegacyInsight,
@@ -36,12 +37,15 @@ export async function GET(req: Request) {
   const curated = readCuratedInsight(videoId);
   const snapshot = readRuntimeSnapshot(videoId);
   const eligibility = getAnalyzeStartEligibility(videoId);
+  const reconciliation = reconcileRuntimeArtifacts(videoId);
   const blockedLegacyInsight = hasBlockedLegacyInsight(videoId);
 
   let state: "idle" | "running" | "complete" | "failed" =
     snapshot.status === "idle" && insight ? "complete" : snapshot.status;
   let error: string | undefined = snapshot.error ?? curated.error ?? undefined;
   let lifecycle: RunLifecycle | null = snapshot.lifecycle;
+  let retryable = eligibility.retryable;
+  let analyzeOutcome = eligibility.outcome;
 
   if (blockedLegacyInsight) {
     state = "failed";
@@ -53,16 +57,25 @@ export async function GET(req: Request) {
     lifecycle = lifecycle ?? "failed";
   }
 
+  if (reconciliation.status === "mismatch") {
+    state = "failed";
+    lifecycle = lifecycle ?? "reconciled";
+    retryable = true;
+    analyzeOutcome = "retry-needed";
+    error = reconciliation.reasons[0]?.message ?? error;
+  }
+
   return NextResponse.json(
     {
       status: state,
       lifecycle,
-      retryable: eligibility.retryable,
-      analyzeOutcome: eligibility.outcome,
+      retryable,
+      analyzeOutcome,
       error,
       insight,
       curated: curated.curated,
       artifacts: getInsightArtifacts(videoId),
+      reconciliation,
       run: snapshot.run,
     },
     { headers: { "Cache-Control": "no-store" } },

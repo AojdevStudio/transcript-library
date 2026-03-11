@@ -306,6 +306,18 @@ export function readInsightLogTail(
   };
 }
 
+export function readInsightRecentLines(
+  videoId: string,
+  maxBytes = 12_000,
+  maxLines = 12,
+): string[] {
+  const tail = readInsightLogTail(videoId, maxBytes);
+  return [...tail.stdout.split(/\r?\n/), ...tail.stderr.split(/\r?\n/)]
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(-maxLines);
+}
+
 export { readRunMetadata };
 
 export function readCuratedInsight(videoId: string): {
