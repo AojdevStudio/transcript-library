@@ -127,6 +127,22 @@ export type RuntimeSnapshot = {
   error: string | null;
 };
 
+export type AnalyzeStartOutcome =
+  | "started"
+  | "already-running"
+  | "already-analyzed"
+  | "retry-needed"
+  | "capacity-reached";
+
+export type AnalyzeStartEligibility = {
+  canStart: boolean;
+  outcome: AnalyzeStartOutcome;
+  retryable: boolean;
+  hasArtifacts: boolean;
+  snapshot: RuntimeSnapshot;
+  message: string;
+};
+
 type ProviderSpec = {
   provider: AnalysisProvider;
   command: string;
@@ -676,6 +692,56 @@ export function readRuntimeSnapshot(videoId: string): RuntimeSnapshot {
     startedAt: run.startedAt,
     completedAt: run.completedAt ?? null,
     error: run.error ?? null,
+  };
+}
+
+export function getAnalyzeStartEligibility(videoId: string): AnalyzeStartEligibility {
+  const snapshot = readRuntimeSnapshot(videoId);
+  const artifactsPresent = hasAnalysisArtifacts(videoId);
+
+  if (snapshot.status === "running") {
+    return {
+      canStart: false,
+      outcome: "already-running",
+      retryable: false,
+      hasArtifacts: artifactsPresent,
+      snapshot,
+      message: "analysis already running",
+    };
+  }
+
+  if (artifactsPresent && snapshot.status === "complete") {
+    return {
+      canStart: false,
+      outcome: "already-analyzed",
+      retryable: false,
+      hasArtifacts: true,
+      snapshot,
+      message: "analysis already exists",
+    };
+  }
+
+  if (artifactsPresent) {
+    return {
+      canStart: false,
+      outcome: "retry-needed",
+      retryable: true,
+      hasArtifacts: true,
+      snapshot,
+      message: "existing analysis evidence needs manual review before rerun",
+    };
+  }
+
+  return {
+    canStart: true,
+    outcome: "started",
+    retryable:
+      snapshot.lifecycle === "failed" ||
+      snapshot.lifecycle === "interrupted" ||
+      snapshot.lifecycle === "reconciled",
+    hasArtifacts: false,
+    snapshot,
+    message: "ready to start",
   };
 }
 

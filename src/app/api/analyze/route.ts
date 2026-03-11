@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import { absTranscriptPath, getVideo } from "@/modules/catalog";
-import { isProcessAlive, readStatus, isValidVideoId, spawnAnalysis } from "@/modules/analysis";
+import { getAnalyzeStartEligibility, isValidVideoId, spawnAnalysis } from "@/modules/analysis";
 
 export const runtime = "nodejs";
 
@@ -12,8 +12,9 @@ export const runtime = "nodejs";
  * runs while metadata continues to come from the shared catalog snapshot.
  *
  * @param req - Incoming request. Expects `?videoId=` query param.
- * @returns JSON `{ ok: true, status: "running" }` on success, or a 400 / 404 /
- *   409 / 429 error response.
+ * @returns JSON `{ ok: true, status: "running", outcome: "started" }` on
+ *   success, or a 400 / 404 / 409 / 429 error response with an explicit
+ *   start outcome when a rerun is blocked.
  */
 export async function POST(req: Request) {
   const url = new URL(req.url);
@@ -28,10 +29,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: "not found" }, { status: 404 });
   }
 
-  // Check if already running
-  const current = readStatus(videoId);
-  if (current?.status === "running" && isProcessAlive(current.pid)) {
-    return NextResponse.json({ ok: false, error: "already running" }, { status: 409 });
+  const eligibility = getAnalyzeStartEligibility(videoId);
+  if (!eligibility.canStart) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: eligibility.message,
+        outcome: eligibility.outcome,
+        retryable: eligibility.retryable,
+        lifecycle: eligibility.snapshot.lifecycle,
+      },
+      { status: 409 },
+    );
   }
 
   // Build transcript content
@@ -60,8 +69,16 @@ export async function POST(req: Request) {
   );
 
   if (!spawned) {
-    return NextResponse.json({ ok: false, error: "too many analyses running" }, { status: 429 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "too many analyses running",
+        outcome: "capacity-reached",
+        retryable: true,
+      },
+      { status: 429 },
+    );
   }
 
-  return NextResponse.json({ ok: true, status: "running" });
+  return NextResponse.json({ ok: true, status: "running", outcome: "started" });
 }

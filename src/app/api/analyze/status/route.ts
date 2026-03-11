@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { isValidVideoId, readRuntimeSnapshot, type RunLifecycle } from "@/modules/analysis";
+import {
+  getAnalyzeStartEligibility,
+  isValidVideoId,
+  readRuntimeSnapshot,
+  type RunLifecycle,
+} from "@/modules/analysis";
 
 export const runtime = "nodejs";
 
@@ -10,6 +15,8 @@ type StatusResponse = {
   error?: string;
   lifecycle?: RunLifecycle | null;
   runId?: string | null;
+  retryable?: boolean;
+  outcome?: string;
 };
 
 /**
@@ -31,6 +38,7 @@ export async function GET(req: Request) {
   }
 
   const snapshot = readRuntimeSnapshot(videoId);
+  const eligibility = getAnalyzeStartEligibility(videoId);
   const response: StatusResponse = {
     status: snapshot.status,
     startedAt: snapshot.startedAt ?? undefined,
@@ -38,6 +46,8 @@ export async function GET(req: Request) {
     error: snapshot.error ?? undefined,
     lifecycle: snapshot.lifecycle,
     runId: snapshot.run?.runId ?? null,
+    retryable: eligibility.retryable,
+    outcome: eligibility.outcome,
   };
 
   return NextResponse.json(response, {

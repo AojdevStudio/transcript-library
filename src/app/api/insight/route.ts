@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { isValidVideoId, readRuntimeSnapshot, type RunLifecycle } from "@/modules/analysis";
+import {
+  getAnalyzeStartEligibility,
+  isValidVideoId,
+  readRuntimeSnapshot,
+  type RunLifecycle,
+} from "@/modules/analysis";
 import {
   getInsightArtifacts,
   hasBlockedLegacyInsight,
@@ -30,6 +35,7 @@ export async function GET(req: Request) {
   const insight = readInsightMarkdown(videoId).markdown;
   const curated = readCuratedInsight(videoId);
   const snapshot = readRuntimeSnapshot(videoId);
+  const eligibility = getAnalyzeStartEligibility(videoId);
   const blockedLegacyInsight = hasBlockedLegacyInsight(videoId);
 
   let state: "idle" | "running" | "complete" | "failed" =
@@ -51,6 +57,8 @@ export async function GET(req: Request) {
     {
       status: state,
       lifecycle,
+      retryable: eligibility.retryable,
+      analyzeOutcome: eligibility.outcome,
       error,
       insight,
       curated: curated.curated,
