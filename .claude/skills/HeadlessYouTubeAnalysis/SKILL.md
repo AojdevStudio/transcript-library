@@ -5,11 +5,12 @@ description: Deterministic, non-interactive YouTube transcript analysis for Tran
 
 # HeadlessYouTubeAnalysis
 
-Purpose: produce a stable markdown analysis from an already-selected YouTube transcript without asking the user any follow-up questions.
+Purpose: produce a stable structured analysis payload from an already-selected YouTube transcript without asking the user any follow-up questions.
 
 ## Operating mode
 
 This workflow is strictly headless:
+
 - No AskUserQuestion
 - No interactive branching
 - No repo browsing prompts
@@ -36,11 +37,35 @@ If metadata is missing, infer conservatively and continue.
 
 ## Output contract
 
-Return clean markdown. Your output is rendered directly by a web UI using react-markdown with remark-gfm and rehype-highlight — so use GFM features (bold, tables, lists, inline code) freely, knowing they render beautifully. Never wrap your output in code fences (no ` ``` ` blocks around the whole document). The output must start directly with the YAML frontmatter `---` delimiter.
+Return JSON only. Never wrap the response in code fences. Do not include commentary before or after the JSON object.
+
+The response must match this contract exactly:
+
+```json
+{
+  "schemaVersion": 1,
+  "videoId": "abc123xyz89",
+  "title": "Video title",
+  "summary": "One concise paragraph summary",
+  "takeaways": ["Takeaway 1", "Takeaway 2"],
+  "actionItems": ["Action 1", "Action 2"],
+  "notablePoints": ["Point 1", "Point 2"],
+  "reportMarkdown": "---\ntitle: \"Video title\"\n...\n---\n\n## Summary\n..."
+}
+```
+
+Field rules:
+
+- `schemaVersion` must be `1`
+- `videoId` must echo the caller-provided video ID exactly
+- `title` must echo the caller-provided title exactly
+- `summary` must be a non-empty paragraph string
+- `takeaways`, `actionItems`, and `notablePoints` must be arrays of non-empty strings
+- `reportMarkdown` must contain the full markdown report described below
 
 ### Frontmatter (required)
 
-Start your output with exactly this YAML frontmatter block:
+Inside `reportMarkdown`, start with exactly this YAML frontmatter block:
 
     ---
     title: "..."
@@ -85,6 +110,7 @@ Start your output with exactly this YAML frontmatter block:
 Use the caller-provided `contentType`.
 
 Interpretation guidelines:
+
 - `tutorial`: emphasize steps, setup, tools, implementation sequence
 - `finance`: emphasize theses, assumptions, catalysts, risk
 - `sermon`: emphasize themes, scripture, applications
@@ -96,6 +122,7 @@ Interpretation guidelines:
 ## GitHub repo handling
 
 If `githubRepos` are present:
+
 - mention them in `Tools / Repos / Resources Mentioned`
 - infer likely relevance from title/description/transcript
 - do not fabricate repository details you were not given

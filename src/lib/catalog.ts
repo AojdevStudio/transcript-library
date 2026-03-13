@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { cache } from "react";
+import { catalogDbPath, openCatalogDb } from "./catalog-db.ts";
 
 export type VideoRow = {
   video_id: string;
@@ -34,7 +35,34 @@ export type ChannelSummary = {
   lastPublishedDate?: string;
 };
 
-function repoRoot(): string {
+type CatalogVideoRow = {
+  video_id: string;
+  title: string;
+  channel: string;
+  topic: string;
+  published_date: string;
+  ingested_date: string;
+  total_chunks: number;
+};
+
+type CatalogPartRow = {
+  video_id: string;
+  chunk_index: number;
+  word_count: number;
+  file_path: string;
+};
+
+type CatalogSnapshot = {
+  catalogVersion: string;
+  dbMtimeMs: number;
+  validationReportMtimeMs: number;
+  mtimeMs: number;
+  videosById: Map<string, Video>;
+};
+
+let snapshotCache: CatalogSnapshot | undefined;
+
+export function playlistTranscriptsRepoRoot(): string {
   const repo = process.env.PLAYLIST_TRANSCRIPTS_REPO;
   if (!repo) {
     throw new Error(
@@ -44,172 +72,188 @@ function repoRoot(): string {
   return repo;
 }
 
-function csvPath(): string {
-  return path.join(repoRoot(), "youtube-transcripts", "index", "videos.csv");
+export function catalogCsvPath(): string {
+  return path.join(
+    playlistTranscriptsRepoRoot(),
+    "youtube-transcripts",
+    "index",
+    "videos" + ".csv",
+  );
 }
 
-function parseCsvLine(line: string): string[] {
-  // Minimal CSV parser for this file format (rare quotes).
-  // Handles quoted fields with commas.
-  const out: string[] = [];
-  let cur = "";
-  let inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') {
-      if (inQ && line[i + 1] === '"') {
-        cur += '"';
-        i++;
-      } else {
-        inQ = !inQ;
-      }
-      continue;
-    }
-    if (ch === "," && !inQ) {
-      out.push(cur);
-      cur = "";
-      continue;
-    }
-    cur += ch;
-  }
-  out.push(cur);
-  return out;
+function catalogValidationReportPath(dbPath = catalogDbPath()): string {
+  return path.join(path.dirname(dbPath), "last-import-validation.json");
 }
 
-let _cache:
-  | {
-      mtimeMs: number;
-      rows: VideoRow[];
-    }
-  | undefined;
+function readCatalogVersionSignal(dbPath: string): {
+  catalogVersion: string;
+  dbMtimeMs: number;
+  validationReportMtimeMs: number;
+} {
+  const dbStats = fs.statSync(dbPath);
+  const validationPath = catalogValidationReportPath(dbPath);
 
-export function readVideoRows(): VideoRow[] {
-  const p = csvPath();
-  const st = fs.statSync(p);
-  if (_cache && _cache.mtimeMs === st.mtimeMs) return _cache.rows;
-
-  const raw = fs.readFileSync(p, "utf8");
-  const lines = raw.split(/\r?\n/).filter(Boolean);
-  const header = parseCsvLine(lines[0]);
-
-  const idx = Object.fromEntries(header.map((h, i) => [h, i] as const));
-
-  const rows: VideoRow[] = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cols = parseCsvLine(lines[i]);
-    if (!cols.length) continue;
-    rows.push({
-      video_id: cols[idx.video_id] ?? "",
-      parent_video_id: cols[idx.parent_video_id] ?? "",
-      title: cols[idx.title] ?? "",
-      channel: cols[idx.channel] ?? "",
-      topic: cols[idx.topic] ?? "",
-      published_date: cols[idx.published_date] ?? "",
-      ingested_date: cols[idx.ingested_date] ?? "",
-      word_count: cols[idx.word_count] ?? "0",
-      chunk: cols[idx.chunk] ?? "0",
-      total_chunks: cols[idx.total_chunks] ?? "0",
-      file_path: cols[idx.file_path] ?? "",
-    });
-  }
-
-  _cache = { mtimeMs: st.mtimeMs, rows };
-  return rows;
-}
-
-let _videosCache:
-  | {
-      mtimeMs: number;
-      map: Map<string, Video>;
-    }
-  | undefined;
-
-export function groupVideos(rows?: VideoRow[]): Map<string, Video> {
-  // Return cached map if CSV hasn't changed
-  const p = csvPath();
-  const st = fs.statSync(p);
-  if (_videosCache && _videosCache.mtimeMs === st.mtimeMs) return _videosCache.map;
-
-  if (!rows) rows = readVideoRows();
-  const map = new Map<string, Video>();
-  for (const r of rows) {
-    const id = r.parent_video_id || r.video_id;
-    const existing = map.get(id);
-    const part = {
-      chunk: Number.parseInt(r.chunk || "0", 10) || 0,
-      wordCount: Number.parseInt(r.word_count || "0", 10) || 0,
-      filePath: r.file_path,
+  try {
+    const validationStats = fs.statSync(validationPath);
+    const report = JSON.parse(fs.readFileSync(validationPath, "utf8")) as {
+      catalogVersion?: string;
     };
 
-    if (!existing) {
-      map.set(id, {
-        videoId: id,
-        title: r.title,
-        channel: r.channel,
-        topic: r.topic,
-        publishedDate: r.published_date,
-        ingestedDate: r.ingested_date,
-        totalChunks: Number.parseInt(r.total_chunks || "0", 10) || 0,
-        parts: [part],
-      });
-    } else {
-      existing.parts.push(part);
-      existing.totalChunks = Math.max(existing.totalChunks, part.chunk);
-      if (r.published_date && r.published_date > existing.publishedDate) {
-        existing.publishedDate = r.published_date;
-      }
-      if (r.ingested_date && r.ingested_date > existing.ingestedDate) {
-        existing.ingestedDate = r.ingested_date;
+    return {
+      catalogVersion: report.catalogVersion ?? `db-mtime:${dbStats.mtimeMs}`,
+      dbMtimeMs: dbStats.mtimeMs,
+      validationReportMtimeMs: validationStats.mtimeMs,
+    };
+  } catch {
+    return {
+      catalogVersion: `db-mtime:${dbStats.mtimeMs}`,
+      dbMtimeMs: dbStats.mtimeMs,
+      validationReportMtimeMs: 0,
+    };
+  }
+}
+
+function loadCatalogSnapshot(): CatalogSnapshot {
+  const dbPath = catalogDbPath();
+  const versionSignal = readCatalogVersionSignal(dbPath);
+
+  if (
+    snapshotCache &&
+    snapshotCache.catalogVersion === versionSignal.catalogVersion &&
+    snapshotCache.dbMtimeMs === versionSignal.dbMtimeMs &&
+    snapshotCache.validationReportMtimeMs === versionSignal.validationReportMtimeMs
+  ) {
+    return snapshotCache;
+  }
+
+  const db = openCatalogDb(dbPath);
+
+  try {
+    const videos = db
+      .prepare(
+        `
+          SELECT
+            video_id,
+            title,
+            channel,
+            topic,
+            published_date,
+            ingested_date,
+            total_chunks
+          FROM catalog_videos
+          ORDER BY published_date DESC, channel ASC, video_id ASC
+        `,
+      )
+      .all() as CatalogVideoRow[];
+
+    const parts = db
+      .prepare(
+        `
+          SELECT
+            video_id,
+            chunk_index,
+            word_count,
+            file_path
+          FROM catalog_parts
+          ORDER BY video_id ASC, chunk_index ASC
+        `,
+      )
+      .all() as CatalogPartRow[];
+
+    const partsByVideo = new Map<string, Video["parts"]>();
+    for (const part of parts) {
+      const group = partsByVideo.get(part.video_id);
+      const normalizedPart = {
+        chunk: part.chunk_index,
+        wordCount: part.word_count,
+        filePath: part.file_path,
+      };
+
+      if (group) {
+        group.push(normalizedPart);
+      } else {
+        partsByVideo.set(part.video_id, [normalizedPart]);
       }
     }
-  }
 
-  for (const v of map.values()) {
-    v.parts.sort((a, b) => a.chunk - b.chunk);
-    v.totalChunks = v.parts.length;
-  }
+    const videosById = new Map<string, Video>();
+    for (const row of videos) {
+      const orderedParts = partsByVideo.get(row.video_id) ?? [];
+      videosById.set(row.video_id, {
+        videoId: row.video_id,
+        title: row.title,
+        channel: row.channel,
+        topic: row.topic,
+        publishedDate: row.published_date,
+        ingestedDate: row.ingested_date,
+        totalChunks: row.total_chunks,
+        parts: orderedParts,
+      });
+    }
 
-  _videosCache = { mtimeMs: st.mtimeMs, map };
-  return map;
+    snapshotCache = {
+      catalogVersion: versionSignal.catalogVersion,
+      dbMtimeMs: versionSignal.dbMtimeMs,
+      validationReportMtimeMs: versionSignal.validationReportMtimeMs,
+      mtimeMs: versionSignal.dbMtimeMs,
+      videosById,
+    };
+
+    return snapshotCache;
+  } finally {
+    db.close();
+  }
+}
+
+export function groupVideos(): Map<string, Video> {
+  return loadCatalogSnapshot().videosById;
 }
 
 export const listChannels = cache(function listChannels(): ChannelSummary[] {
   const videos = Array.from(groupVideos().values());
   const byChannel = new Map<string, ChannelSummary>();
 
-  for (const v of videos) {
-    const key = v.channel || "(unknown)";
+  for (const video of videos) {
+    const key = video.channel || "(unknown)";
     const existing = byChannel.get(key);
+
     if (!existing) {
       byChannel.set(key, {
         channel: key,
-        topics: v.topic ? [v.topic] : [],
+        topics: video.topic ? [video.topic] : [],
         videoCount: 1,
-        lastPublishedDate: v.publishedDate,
+        lastPublishedDate: video.publishedDate,
       });
-    } else {
-      existing.videoCount++;
-      if (v.topic && !existing.topics.includes(v.topic)) existing.topics.push(v.topic);
-      if (
-        v.publishedDate &&
-        (!existing.lastPublishedDate || v.publishedDate > existing.lastPublishedDate)
-      ) {
-        existing.lastPublishedDate = v.publishedDate;
-      }
+      continue;
+    }
+
+    existing.videoCount += 1;
+    if (video.topic && !existing.topics.includes(video.topic)) {
+      existing.topics.push(video.topic);
+    }
+    if (
+      video.publishedDate &&
+      (!existing.lastPublishedDate || video.publishedDate > existing.lastPublishedDate)
+    ) {
+      existing.lastPublishedDate = video.publishedDate;
     }
   }
 
-  return Array.from(byChannel.values()).sort((a, b) => {
-    const da = a.lastPublishedDate || "";
-    const db = b.lastPublishedDate || "";
-    if (da !== db) return db.localeCompare(da);
-    return a.channel.localeCompare(b.channel);
+  return Array.from(byChannel.values()).sort((left, right) => {
+    const leftDate = left.lastPublishedDate || "";
+    const rightDate = right.lastPublishedDate || "";
+    if (leftDate !== rightDate) {
+      return rightDate.localeCompare(leftDate);
+    }
+    return left.channel.localeCompare(right.channel);
   });
 });
 
 export const listVideosByChannel = cache(function listVideosByChannel(channel: string): Video[] {
-  const videos = Array.from(groupVideos().values()).filter((v) => v.channel === channel);
-  return videos.sort((a, b) => (b.publishedDate || "").localeCompare(a.publishedDate || ""));
+  const videos = Array.from(groupVideos().values()).filter((video) => video.channel === channel);
+  return videos.sort((left, right) =>
+    (right.publishedDate || "").localeCompare(left.publishedDate || ""),
+  );
 });
 
 export function getVideo(videoId: string): Video | undefined {
@@ -217,5 +261,5 @@ export function getVideo(videoId: string): Video | undefined {
 }
 
 export function absTranscriptPath(filePath: string): string {
-  return path.join(repoRoot(), "youtube-transcripts", filePath);
+  return path.join(playlistTranscriptsRepoRoot(), "youtube-transcripts", filePath);
 }

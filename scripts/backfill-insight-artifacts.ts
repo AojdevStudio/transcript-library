@@ -1,13 +1,11 @@
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
-import { getVideo } from "@/modules/catalog";
-import {
-  analysisPath,
-  displayAnalysisPath,
-  insightDir,
-  insightsBaseDir,
-  metadataCachePath,
-} from "@/modules/analysis";
+import { fileURLToPath } from "node:url";
+
+const require = createRequire(import.meta.url);
+const { analysisPath, displayAnalysisPath, insightsBaseDir, metadataCachePath } =
+  require("../src/lib/insight-paths.ts") as typeof import("../src/lib/insight-paths");
 
 function readJson(filePath: string): Record<string, unknown> | null {
   try {
@@ -17,42 +15,48 @@ function readJson(filePath: string): Record<string, unknown> | null {
   }
 }
 
-function resolveTitle(videoId: string): string | null {
-  const video = getVideo(videoId);
-  if (video?.title) return video.title;
+export function readTitleFromFrontmatter(markdown: string): string | null {
+  const normalized = markdown.replace(/\r/g, "");
+  if (!normalized.startsWith("---\n")) return null;
 
-  const meta = readJson(metadataCachePath(videoId));
-  if (typeof meta?.title === "string" && meta.title) return meta.title;
+  const end = normalized.indexOf("\n---\n", 4);
+  if (end === -1) return null;
+
+  const frontmatter = normalized.slice(4, end).split("\n");
+  for (const line of frontmatter) {
+    const match = line.match(/^title:\s*["']?(.*?)["']?\s*$/i);
+    if (match?.[1]?.trim()) {
+      return match[1].trim();
+    }
+  }
 
   return null;
 }
 
-function ensureDisplayArtifact(videoId: string): string | null {
-  const title = resolveTitle(videoId);
-  const canonical = analysisPath(videoId);
-  if (!title || !fs.existsSync(canonical)) return null;
+export function resolveInsightTitle(videoId: string): string | null {
+  const meta = readJson(metadataCachePath(videoId));
+  if (typeof meta?.title === "string" && meta.title.trim()) return meta.title.trim();
+
+  const analysis = analysisPath(videoId);
+  if (fs.existsSync(analysis)) {
+    const title = readTitleFromFrontmatter(fs.readFileSync(analysis, "utf8"));
+    if (title) return title;
+  }
+
+  return null;
+}
+
+export function ensureDisplayArtifact(videoId: string): string | null {
+  const title = resolveInsightTitle(videoId);
+  const analysis = analysisPath(videoId);
+  if (!title || !fs.existsSync(analysis)) return null;
 
   const display = displayAnalysisPath(videoId, title);
   if (!fs.existsSync(display)) {
-    fs.copyFileSync(canonical, display);
+    fs.copyFileSync(analysis, display);
   }
+
   return path.basename(display);
-}
-
-function migrateLegacyFlatInsight(videoId: string): string | null {
-  const legacyFile = path.join(insightsBaseDir(), `${videoId}.md`);
-  if (!fs.existsSync(legacyFile)) return null;
-
-  const dir = insightDir(videoId);
-  fs.mkdirSync(dir, { recursive: true });
-
-  const canonical = analysisPath(videoId);
-  if (!fs.existsSync(canonical)) {
-    fs.copyFileSync(legacyFile, canonical);
-  }
-
-  const displayFile = ensureDisplayArtifact(videoId);
-  return displayFile ?? path.basename(canonical);
 }
 
 function main() {
@@ -63,23 +67,28 @@ function main() {
   const created: string[] = [];
 
   for (const entry of entries) {
-    if (entry.isDirectory()) {
-      const display = ensureDisplayArtifact(entry.name);
-      if (display) created.push(`${entry.name}/${display}`);
-      continue;
-    }
+    if (!entry.isDirectory()) continue;
 
-    if (entry.isFile() && entry.name.endsWith(".md")) {
-      const videoId = entry.name.slice(0, -3);
-      const artifact = migrateLegacyFlatInsight(videoId);
-      if (artifact) created.push(`${videoId}/${artifact}`);
-    }
+    const display = ensureDisplayArtifact(entry.name);
+    if (display) created.push(`${entry.name}/${display}`);
   }
 
-  console.log(JSON.stringify({
-    updatedCount: created.length,
-    artifacts: created.sort((a, b) => a.localeCompare(b)),
-  }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        updatedCount: created.length,
+        artifacts: created.sort((a, b) => a.localeCompare(b)),
+      },
+      null,
+      2,
+    ),
+  );
 }
 
-main();
+const isDirectExecution =
+  typeof process.argv[1] === "string" &&
+  fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);
+
+if (isDirectExecution) {
+  main();
+}

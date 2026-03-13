@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "lastRunAt": "2026-03-09T20:40:43.374Z",
+  "insightsBaseDir": "/Users/ossieirondi/Projects/transcript-library/data/insights",
+  "migratedCount": 0,
+  "manualReviewCount": 0,
+  "remainingLegacyCount": 0,
+  "migratedVideoIds": [],
+  "manualReviewVideoIds": [],
+  "remainingLegacyVideoIds": [],
+  "manualReview": [],
+  "checkOnly": true
+}

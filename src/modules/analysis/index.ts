@@ -1,43 +1,36 @@
 /**
- * Module: analysis
- * Purpose: Own analysis job execution, status tracking, and insight file paths.
+ * Owns analysis job execution, status tracking, and insight file paths.
  *
- * Public API:
- * - tryAcquireSlot()
- * - decrementRunning()
- * - readStatus(videoId)
- * - isProcessAlive(pid)
- * - isValidVideoId(id)
- * - spawnAnalysis(videoId, meta, transcript, logPrefix?)
- * - insightDir(videoId)
- * - insightsBaseDir()
- * - statusPath(videoId)
- * - analysisPath(videoId)
- * - displayAnalysisPath(videoId, title)
- * - metadataCachePath(videoId)
- * - runMetadataPath(videoId)
- * - atomicWriteJson(filePath, obj)
- *
- * Exported IO Types:
- * - StatusFile, AnalysisMeta, RunFile, AnalysisProvider
- *
- * Side Effects:
- * - File IO, process spawning, process signals.
- *
- * Error Behavior:
- * - Returns booleans/null for expected failures; throws on unexpected IO errors.
+ * @module analysis
+ * @see module:lib/analysis
+ * @remarks
+ * Side effects: file IO, process spawning, process signals.
+ * Error behavior: returns booleans/null for expected failures; throws on unexpected IO errors.
  */
 export {
+  __resetAnalysisRuntimeForTests,
+  attemptStderrLogPath,
+  attemptStdoutLogPath,
+  buildRunArtifacts,
+  createRunId,
+  getAnalyzeStartEligibility,
+  startAnalysis,
   tryAcquireSlot,
   decrementRunning,
+  hasAnalysisArtifacts,
+  readRuntimeSnapshot,
+  reconcileLatestRun,
   readStatus,
   isProcessAlive,
   isValidVideoId,
+  runAttemptDir,
+  runAttemptMetadataPath,
   spawnAnalysis,
   insightDir,
   insightsBaseDir,
   statusPath,
   analysisPath,
+  structuredAnalysisPath,
   displayAnalysisPath,
   metadataCachePath,
   runMetadataPath,
@@ -45,8 +38,18 @@ export {
   stdoutLogPath,
   stderrLogPath,
   readRunMetadata,
+  writeRunLifecycle,
+  type CompatibilityStatus,
+  type AnalyzeStartEligibility,
+  type AnalyzeStartOutcome,
+  type StartAnalysisOutcome,
+  type StartAnalysisResult,
+  type RuntimeSnapshot,
+  type RuntimeState,
   type StatusFile,
   type AnalysisMeta,
   type RunFile,
+  type RunArtifacts,
+  type RunLifecycle,
   type AnalysisProvider,
 } from "@/lib/analysis";

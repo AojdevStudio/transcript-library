@@ -11,17 +11,17 @@ Executed full workflow for `AojdevStudio/transcript-library`:
 
 ## Framework Target
 
-Feature-based Next.js app with bounded operational docs (`docs/ops/*`).
+Feature-based Next.js app with bounded operational docs (`docs/operations/*`).
 
 ## Phases
 
 1. **Create structure**
-   - Added `docs/ops/{plans,app-docs,artifacts,todos}` and `docs/architecture/`
+   - Added `docs/operations/{plans,app-docs,artifacts,todos}` and `docs/architecture/`
 2. **Move non-code files**
-   - `Plans/` -> `docs/ops/plans/`
-   - `app_docs/` -> `docs/ops/app-docs/`
-   - `artifacts/` -> `docs/ops/artifacts/`
-   - `todos/` -> `docs/ops/todos/`
+   - `Plans/` -> `docs/operations/plans/`
+   - `app_docs/` -> `docs/operations/app-docs/`
+   - `artifacts/` -> `docs/operations/artifacts/`
+   - `todos/` -> `docs/operations/todos/`
 3. **Update references/scripts**
    - Updated `README.md` paths
    - Updated nightly insights artifact output path in `scripts/nightly-insights.ts`

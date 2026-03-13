@@ -1,23 +1,39 @@
 import { NextResponse } from "next/server";
-import fs from "node:fs";
 import {
-  readStatus,
-  isProcessAlive,
+  getAnalyzeStartEligibility,
   isValidVideoId,
-  statusPath,
-  analysisPath,
-  atomicWriteJson,
+  readRuntimeSnapshot,
+  type RunLifecycle,
 } from "@/modules/analysis";
+import { requirePrivateApi, sanitizePayload } from "@/lib/private-api-guard";
 
 export const runtime = "nodejs";
 
 type StatusResponse = {
   status: "idle" | "running" | "complete" | "failed";
   startedAt?: string;
+  completedAt?: string;
   error?: string;
+  lifecycle?: RunLifecycle | null;
+  runId?: string | null;
+  retryable?: boolean;
+  outcome?: string;
 };
 
+/**
+ * GET /api/analyze/status
+ * Returns the current analysis lifecycle status for a video from the shared
+ * durable runtime snapshot. Restart reconciliation happens inside the shared
+ * runtime layer rather than route-local PID patching.
+ *
+ * @param req - Incoming request. Expects `?videoId=` query param.
+ * @returns JSON `StatusResponse` (`{ status, startedAt?, error? }`), or a 400
+ *   error if the videoId is invalid. Always served with `Cache-Control: no-store`.
+ */
 export async function GET(req: Request) {
+  const guard = requirePrivateApi(req);
+  if (!guard.allowed) return guard.response;
+
   const url = new URL(req.url);
   const videoId = url.searchParams.get("videoId") || "";
 
@@ -25,40 +41,20 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "invalid videoId" }, { status: 400 });
   }
 
-  const status = readStatus(videoId);
+  const snapshot = readRuntimeSnapshot(videoId);
+  const eligibility = getAnalyzeStartEligibility(videoId);
+  const response: StatusResponse = {
+    status: snapshot.status,
+    startedAt: snapshot.startedAt ?? undefined,
+    completedAt: snapshot.completedAt ?? undefined,
+    error: snapshot.error ?? undefined,
+    lifecycle: snapshot.lifecycle,
+    runId: snapshot.run?.runId ?? null,
+    retryable: eligibility.retryable,
+    outcome: eligibility.outcome,
+  };
 
-  let response: StatusResponse;
-
-  if (status?.status === "running") {
-    // Verify PID is alive
-    if (!isProcessAlive(status.pid)) {
-      // Process died — update status file
-      const updated = {
-        ...status,
-        status: "failed" as const,
-        completedAt: new Date().toISOString(),
-        error: "process died unexpectedly",
-      };
-      atomicWriteJson(statusPath(videoId), updated);
-      response = { status: "failed", startedAt: status.startedAt, error: updated.error };
-    } else {
-      response = { status: "running", startedAt: status.startedAt };
-    }
-  } else if (status?.status === "complete") {
-    response = { status: "complete", startedAt: status.startedAt };
-  } else if (status?.status === "failed") {
-    response = { status: "failed", startedAt: status.startedAt, error: status.error };
-  } else {
-    // No status.json — check if analysis.md exists
-    try {
-      fs.accessSync(analysisPath(videoId));
-      response = { status: "complete" };
-    } catch {
-      response = { status: "idle" };
-    }
-  }
-
-  return NextResponse.json(response, {
+  return NextResponse.json(sanitizePayload(response), {
     headers: { "Cache-Control": "no-store" },
   });
 }

@@ -2,14 +2,14 @@
 
 Target framework: Feature-Based app + bounded ops docs (hybrid)
 
-| #   | Old Path                                       | New Path                       | Category     | Impact | Notes                                    |
-| --- | ---------------------------------------------- | ------------------------------ | ------------ | -----: | ---------------------------------------- |
-| 1   | `Plans/`                                       | `docs/ops/plans/`              | docs         |    low | planning docs consolidation              |
-| 2   | `app_docs/`                                    | `docs/ops/app-docs/`           | docs         |    low | app maintenance docs consolidation       |
-| 3   | `artifacts/`                                   | `docs/ops/artifacts/`          | docs/scripts |    low | nightly artifacts moved under docs ops   |
-| 4   | `todos/`                                       | `docs/ops/todos/`              | docs         |    low | archive TODO notes from root             |
-| 5   | `scripts/nightly-insights.ts` (`artifactsDir`) | write to `docs/ops/artifacts/` | scripts      |    low | keep generated artifacts in new location |
-| 6   | `README.md` references `Plans/PRD.md`          | `docs/ops/plans/PRD.md`        | docs         |    low | update path docs                         |
+| #   | Old Path                                       | New Path                              | Category     | Impact | Notes                                    |
+| --- | ---------------------------------------------- | ------------------------------------- | ------------ | -----: | ---------------------------------------- |
+| 1   | `Plans/`                                       | `docs/operations/plans/`              | docs         |    low | planning docs consolidation              |
+| 2   | `app_docs/`                                    | `docs/operations/app-docs/`           | docs         |    low | app maintenance docs consolidation       |
+| 3   | `artifacts/`                                   | `docs/operations/artifacts/`          | docs/scripts |    low | nightly artifacts moved under docs ops   |
+| 4   | `todos/`                                       | `docs/operations/todos/`              | docs         |    low | archive TODO notes from root             |
+| 5   | `scripts/nightly-insights.ts` (`artifactsDir`) | write to `docs/operations/artifacts/` | scripts      |    low | keep generated artifacts in new location |
+| 6   | `README.md` references `Plans/PRD.md`          | `docs/operations/plans/PRD.md`        | docs         |    low | update path docs                         |
 
 ## Phase plan
 

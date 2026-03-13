@@ -8,7 +8,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/AojdevStudio/transcript-library/pulls)
 
-*A private reading room for a small group of friends who take YouTube seriously.*
+_A private reading room for a small group of friends who take YouTube seriously._
 
 [**Library**](#quick-start) · [**Knowledge Base**](#how-it-works) · [**Analysis Runtime**](#how-it-works)
 
@@ -29,7 +29,7 @@ The video had real signal. A framework you could apply. A story worth discussing
 
 **Sound familiar?**
 
-> *"I'll send you the timestamp." — said before forgetting the timestamp, the video, and what it was about.*
+> _"I'll send you the timestamp." — said before forgetting the timestamp, the video, and what it was about._
 
 ---
 
@@ -40,6 +40,7 @@ Everyone in the group is curious. Nobody has unlimited time. You need a way to e
 <div align="center">
 
 ### **Watch the video inside the app.**
+
 ### **Let the analysis run in the background.**
 
 </div>
@@ -58,12 +59,12 @@ The transcript is already there. The AI tooling already exists. The only missing
 
 Transcript Library is a private internal tool for a small group of friends built around a shared YouTube playlist.
 
-| Layer | What It Does |
-|:------|:-------------|
-| **Catalog** | Reads transcript metadata from a local `playlist-transcripts` repo |
-| **Player** | Embeds the YouTube video in-app — no tab switching |
-| **Analysis** | Runs AI synthesis headlessly via `claude` CLI or `codex` CLI |
-| **Knowledge** | Stores markdown notes alongside video insights for long-term reference |
+| Layer         | What It Does                                                                   |
+| :------------ | :----------------------------------------------------------------------------- |
+| **Catalog**   | Refreshes a local SQLite catalog from the transcript repo for all browse reads |
+| **Player**    | Embeds the YouTube video in-app — no tab switching                             |
+| **Analysis**  | Runs AI synthesis headlessly via `claude` CLI or `codex` CLI                   |
+| **Knowledge** | Stores markdown notes alongside video insights for long-term reference         |
 
 This is not a SaaS product. It is a proof of concept for a trusted group that already has access to Claude and ChatGPT tooling.
 
@@ -118,14 +119,14 @@ VideoAnalysisWorkspace (live status, polling)
 
 ## What You Get
 
-| Feature | How It Works | Why It Matters |
-|:--------|:-------------|:---------------|
-| **Embedded player** | YouTube iframe, no redirect | Watch and read without splitting attention |
-| **Headless analysis** | claude-cli or codex-cli via provider abstraction | Run from any machine, swap providers without touching UI |
-| **Insight artifacts** | Canonical `analysis.md` + run metadata per video | Stable lookup by `videoId`, human-readable alongside machine paths |
-| **Live status** | SSE stream during analysis run | Know when it's done without refreshing |
-| **Knowledge base** | Markdown folders alongside video insights | Essays and notes in the same editorial workspace |
-| **Breadcrumb navigation** | Library → Channel → Video | Always know where you are, always one click back |
+| Feature                   | How It Works                                     | Why It Matters                                                     |
+| :------------------------ | :----------------------------------------------- | :----------------------------------------------------------------- |
+| **Embedded player**       | YouTube iframe, no redirect                      | Watch and read without splitting attention                         |
+| **Headless analysis**     | claude-cli or codex-cli via provider abstraction | Run from any machine, swap providers without touching UI           |
+| **Insight artifacts**     | Canonical `analysis.md` + run metadata per video | Stable lookup by `videoId`, human-readable alongside machine paths |
+| **Live status**           | SSE stream during analysis run                   | Know when it's done without refreshing                             |
+| **Knowledge base**        | Markdown folders alongside video insights        | Essays and notes in the same editorial workspace                   |
+| **Breadcrumb navigation** | Library → Channel → Video                        | Always know where you are, always one click back                   |
 
 ---
 
@@ -152,9 +153,20 @@ cp .env.example .env.local
 # Required
 PLAYLIST_TRANSCRIPTS_REPO=/absolute/path/to/playlist-transcripts
 
-# Optional — defaults to claude-cli
+# Optional
 ANALYSIS_PROVIDER=claude-cli
+INSIGHTS_BASE_DIR=/srv/transcript-library/insights   # hosted deploys
+CATALOG_DB_PATH=/srv/transcript-library/catalog/catalog.db
+
+# Hosted deployment (set these when deploying, not for local dev)
+HOSTED=true                          # enables preflight validation + API guard
+PRIVATE_API_TOKEN=<strong-random>    # required in hosted mode — protects all /api/* routes
+SYNC_TOKEN=<webhook-secret>          # recommended — authenticates /api/sync-hook callers
 ```
+
+> **Local dev needs zero hosted config.** Leave `HOSTED` unset and all API routes
+> work without authentication. The server logs warnings for missing vars but never
+> blocks startup.
 
 ### Run
 
@@ -171,18 +183,48 @@ just start
 
 ### Artifact Layout
 
-Each analysis lives under a stable `videoId` path:
+Each analysis lives under a stable `videoId` path. Local development defaults to
+`data/insights`, while the canonical hosted path is `/srv/transcript-library/insights` via
+`INSIGHTS_BASE_DIR`.
 
 ```
 data/insights/<videoId>/
-  analysis.md              ← canonical output
+  analysis.json            ← authoritative structured artifact
+  analysis.md              ← human-readable report derived from JSON
   <slugified-title>.md     ← human-readable copy
   video-metadata.json      ← channel, topic, published date
   run.json                 ← provider, model, timing
   worker-stdout.txt        ← live log during run
   worker-stderr.txt        ← errors
   status.json              ← idle | running | complete | failed
+
+data/insights/.migration-status.json
+  remainingLegacyCount     ← machine-checkable migration window status
 ```
+
+Legacy markdown-only artifacts are supported only during the one-time migration window. Operators
+can check migration completion with `node scripts/migrate-legacy-insights-to-json.ts --check` and
+complete the upgrade by rerunning the script without `--check`.
+
+### Catalog Refresh Contract
+
+Browse reads are SQLite-only after Phase 2. The app keeps the live catalog at
+`data/catalog/catalog.db` by default and writes the latest import report to
+`data/catalog/last-import-validation.json` unless `CATALOG_DB_PATH` points somewhere else.
+
+```bash
+node scripts/rebuild-catalog.ts
+node scripts/rebuild-catalog.ts --check
+```
+
+- `node scripts/rebuild-catalog.ts` rebuilds a temp SQLite snapshot, validates it, and atomically
+  swaps it into place only when the import passes.
+- `node scripts/rebuild-catalog.ts --check` runs the same validation gate without replacing the live
+  DB, while still updating `last-import-validation.json` for operator review.
+- A failed validation leaves the last known-good `catalog.db` in place. The app does not fall back
+  to `videos.csv` at runtime anymore.
+- `POST /api/sync-hook` and `scripts/nightly-insights.ts` both refresh SQLite before reading browse
+  metadata, so operational automation and the app use the same catalog authority.
 
 ### Provider Abstraction
 
@@ -193,6 +235,19 @@ Analysis runs through a thin provider boundary. Swap `ANALYSIS_PROVIDER` to swit
 ANALYSIS_PROVIDER=claude-cli    # default
 ANALYSIS_PROVIDER=codex-cli     # alternative
 ```
+
+### Runtime Observability Contract
+
+Phase 3 keeps the operator story simple and durable:
+
+- `run.json` is the latest durable run record for a `videoId`, including provider, model, lifecycle, and timing.
+- `status.json` is the compatibility artifact that mirrors the current lifecycle for quick reads and older surfaces.
+- `worker-stdout.txt` and `worker-stderr.txt` remain the raw evidence trail when a run needs deeper inspection.
+- `reconciliation.json` records whether the latest durable run and the expected artifacts still agree, including mismatch reasons and rerun-ready guidance.
+- `GET /api/insight` is the status-first snapshot used by the video workspace. It returns lifecycle, stage, retry guidance, reconciliation details, recent log lines, and the current artifact bundle without making operators read raw files first.
+- `GET /api/insight/stream` reuses a shared per-video snapshot cache so concurrent viewers consume the same live status payload instead of polling disk independently. The workspace prioritizes stage, retry guidance, and `recentLogs`; full raw logs stay secondary.
+
+When `reconciliation.json` reports a mismatch, the app treats the latest run as retry-needed instead of quietly presenting it as normal success. The intended operator recovery path is a clean rerun, not manual file repair.
 
 ### Core API Routes
 
@@ -215,6 +270,8 @@ just build            # Next.js build
 just lint             # ESLint
 just typecheck        # tsc --noEmit
 just backfill-insights  # Re-run analysis for existing videos
+node scripts/rebuild-catalog.ts --check  # Validate catalog parity without cutover
+npx tsx scripts/benchmark-hosted-scale.ts --check  # Scale validation (1000-video benchmark)
 ```
 
 ---
