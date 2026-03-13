@@ -46,13 +46,16 @@ export function resolveInsightTitle(videoId: string): string | null {
   return null;
 }
 
-export function ensureDisplayArtifact(videoId: string): string | null {
+export function ensureDisplayArtifact(
+  videoId: string,
+  options?: { refresh?: boolean },
+): string | null {
   const title = resolveInsightTitle(videoId);
   const analysis = analysisPath(videoId);
   if (!title || !fs.existsSync(analysis)) return null;
 
   const display = displayAnalysisPath(videoId, title);
-  if (!fs.existsSync(display)) {
+  if (options?.refresh || !fs.existsSync(display)) {
     fs.copyFileSync(analysis, display);
   }
 

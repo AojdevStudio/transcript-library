@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "videoId": "We7BZVKbCVw",
+  "runId": null,
+  "status": "ok",
+  "resolution": "none",
+  "retryable": false,
+  "checkedAt": "2026-03-13T03:25:43.573Z",
+  "detectedAt": null,
+  "resolvedAt": null,
+  "reasons": [],
+  "artifactState": {
+    "canonicalAnalysis": false,
+    "structuredAnalysis": "missing",
+    "statusFile": false,
+    "runFile": false
+  },
+  "evidence": {
+    "stdoutTail": "━━━ 📚 LEARN ━━━ 7/7\n\n**Q1 — Self:** Could have been slightly faster by skipping the plan/think compression since this was a clear skill invocation.\n**Q2 — Algorithm:** For Fast skill invocations, the algorithm could auto-compress phases 2-4 into a single checkpoint.\n**Q3 — AI:** A smarter AI would have pre-detected the ExtractWisdom match from the transcript drop alone and compressed the OBSERVE preamble further.\n\n🗣️ Jarvis: Extracted wisdom from the Boris Cherny interview, Ossie. Ten sections covering the death of coding, latent demand, safety, and post-AGI miso plans.\n",
+    "stderrTail": ""
+  }
+}

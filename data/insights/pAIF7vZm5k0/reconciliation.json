@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "videoId": "pAIF7vZm5k0",
+  "runId": null,
+  "status": "mismatch",
+  "resolution": "rerun-ready",
+  "retryable": true,
+  "checkedAt": "2026-03-13T03:25:43.576Z",
+  "detectedAt": "2026-03-13T03:25:43.576Z",
+  "resolvedAt": null,
+  "reasons": [
+    {
+      "code": "artifacts-without-run",
+      "severity": "failure",
+      "message": "Canonical artifacts exist without a matching durable run record."
+    }
+  ],
+  "artifactState": {
+    "canonicalAnalysis": true,
+    "structuredAnalysis": "valid",
+    "statusFile": false,
+    "runFile": false
+  },
+  "evidence": {
+    "stdoutTail": "━━━ 📚 LEARN ━━━ 7/7\n⏱️ FINAL TIME: [Total: ~90s | Budget: 120s | WITHIN]\n\n**Q1 — Self:** Executed cleanly. The transcript had heavy transcription noise which required careful interpretation — correctly identified all major garbled terms.\n\n**Q2 — Algorithm:** Could have detected this was a skill-invocation task faster and skipped deeper OBSERVE analysis, but the Standard effort level kept it proportional.\n\n**Q3 — AI:** A smarter AI might have cross-referenced the Git Context Controller paper claims with known benchmarks for additional context in References & Rabbit Holes.\n\n🗣️ Jarvis: Extracted seven sections of wisdom from AI Jason's video on agent memory using OneContext and Git Context Controller.\n",
+    "stderrTail": ""
+  }
+}

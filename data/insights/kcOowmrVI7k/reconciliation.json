@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "videoId": "kcOowmrVI7k",
+  "runId": "legacy-20260307171030",
+  "status": "mismatch",
+  "resolution": "rerun-ready",
+  "retryable": true,
+  "checkedAt": "2026-03-13T03:25:43.575Z",
+  "detectedAt": "2026-03-13T03:25:43.575Z",
+  "resolvedAt": null,
+  "reasons": [
+    {
+      "code": "missing-structured-analysis",
+      "severity": "failure",
+      "message": "The latest run completed but analysis.json is missing."
+    }
+  ],
+  "artifactState": {
+    "canonicalAnalysis": true,
+    "structuredAnalysis": "missing",
+    "statusFile": true,
+    "runFile": true
+  },
+  "evidence": {
+    "stdoutTail": "move that burden\n- A scene-based prompt has four required components: **timing**, **defined UI state per scene**, **special effect keywords**, and **action/technical details**\n- Separating planning (structured prompt generation) from building (code generation) is the critical architectural move\n- Effect keywords (e.g., \"3D perspective rotation\", \"fading with staggered delay\") are not decoration — they are control signals the model responds to\n- Super Design's product-release-demo skill automates structured prompt generation via targeted questions, then hands the completed plan to Gemini 3.1 Pro\n- The technique works with any coding agent; the Super Design tooling is a convenience wrapper, not a requirement\n\n## Action Items\n\n1. Before prompting any model for animation, write a scene-by-scene plan first — list every scene with its duration, starting UI state, ending UI state, and effects\n2. Include explicit timing values (e.g., \"0–1.2s: logo fades in with opacity ease-in\") rather than relative language like \"slow\" or \"quick\"\n3. Add specific effect keywords to each scene description to give the model precise rendering intent\n4. If using Super Design, use the Chrome extension to clone the target UI component, then invoke the product-release-demo skill for guided prompt scaffolding\n5. Validate the generated animation plan before building — the plan stage is where corrections are cheap; post-generation rewrites are expensive\n6. Apply this same scene-based prompt structure in Claude Code or Cursor if not using Super Design\n\n## Supporting Details\n\n### Ideas / Methods / Claims\n\n- **Root cause of bad AI animation**: open-ended prompts force models to perform spatial planning, a task outside their training distribution\n- **Scene-based prompt structure**: each scene block contains timing, UI state description, effect keywords, and action/transition details\n- **Two-stage separation**: Stage 1 = structured planning artifact; Stage 2 = code generation against that artifact\n- **Claim**: even a basic structured prompt (without special techniques) yields \"2–3x better results\" than a freeform prompt\n- The transcript references \"rocket\" as an external practitioner whose open-claw animation prompt exemplifies the correct structure\n\n### Tools / Repos / Resources Mentioned\n\n- **Gemini 2.0 / Gemini 3.1 Pro** — target model for animation generation; 3.1 Pro cited as best for this use case\n- **Super Design** — platform with a skill library for structured animation prompting; includes a \"product release demo\" skill\n- **Super Design Chrome Extension** — clones any website or UI component into a pixel-perfect HTML artifact for use in coding agents\n- **Claude Code / Cursor** — mentioned as valid alternative environments for the same prompting technique\n\n### Who This Is For\n\n- Developers and designers trying to generate polished product-launch or demo animations using LLMs\n- Anyone who has tried Gemini or similar models for SVG/animation work and been disappointed by the output\n- Users of Super Design who want to leverage the built-in animation skill pipeline\n- Builders using Claude Code or Cursor who want structured prompting techniques that transfer across tools\n\n### Risks, Gaps, or Caveats\n\n- The tutorial is short (~5 min, ~1000 words) and the concrete prompt examples shown are partial — no full scene-based prompt template is provided verbatim in the transcript\n- The \"2–3x better results\" claim is anecdotal and not benchmarked\n- The Super Design workflow requires their Chrome extension and platform account; the \"free\" tier is mentioned but limits are not specified\n- The transcript references \"Gemini 3.1 Pro\" but the published date is 2026-02-25 — this likely refers to Gemini 2.0 Flash or a model branded differently at release; verify the exact model ID before building on this\n- Transcript audio quality indicators (\"shitty\", \"skew\", \"pera release\") suggest some transcription noise; minor factual details may be slightly garbled\n```\n",
+    "stderrTail": ""
+  }
+}

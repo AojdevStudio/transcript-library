@@ -1,0 +1,704 @@
+2026-03-13T04:48:07.059846Z ERROR codex_core::skills::loader: failed to stat skills entry /Users/ossieirondi/.agents/skills/Art (symlink): No such file or directory (os error 2)
+2026-03-13T04:48:07.059884Z ERROR codex_core::skills::loader: failed to stat skills entry /Users/ossieirondi/.agents/skills/CreateSkill (symlink): No such file or directory (os error 2)
+2026-03-13T04:48:07.059890Z ERROR codex_core::skills::loader: failed to stat skills entry /Users/ossieirondi/.agents/skills/Cloudflare (symlink): No such file or directory (os error 2)
+OpenAI Codex v0.114.0 (research preview)
+--------
+workdir: /Users/ossieirondi/Projects/transcript-library
+model: gpt-5.4
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: medium
+reasoning summaries: none
+session id: 019ce585-f5d2-7201-8643-95997543428c
+--------
+user
+You are running a repo-local headless YouTube analysis workflow.
+Follow the local skill specification exactly and do not ask any clarifying questions.
+Return JSON only.
+Do not wrap the response in code fences.
+The JSON object must contain exactly these top-level fields: schemaVersion, videoId, title, summary, takeaways, actionItems, notablePoints, reportMarkdown.
+Use schemaVersion 1.
+The videoId field must be I1NdVZ6l5CQ.
+The title field must be "Claude Code & Cowork Now Run 24/7 — Scheduled Tasks".
+reportMarkdown must contain the complete markdown report for human reading.
+
+[Local Skill Specification]
+---
+name: HeadlessYouTubeAnalysis
+description: Deterministic, non-interactive YouTube transcript analysis for Transcript Library.
+---
+
+# HeadlessYouTubeAnalysis
+
+Purpose: produce a stable structured analysis payload from an already-selected YouTube transcript without asking the user any follow-up questions.
+
+## Operating mode
+
+This workflow is strictly headless:
+
+- No AskUserQuestion
+- No interactive branching
+- No repo browsing prompts
+- No clarification requests
+- No voice notifications
+- No sub-agent orchestration
+
+If metadata is missing, infer conservatively and continue.
+
+## Inputs expected from the caller
+
+- `videoId`
+- `title`
+- `channel`
+- `topic`
+- `publishedDate`
+- `sourceUrl`
+- `durationSeconds` when available
+- `contentType`
+- `analysisDepth` fixed to `standard`
+- `description` when available
+- `githubRepos` extracted from description when available
+- full transcript text
+
+## Output contract
+
+Return JSON only. Never wrap the response in code fences. Do not include commentary before or after the JSON object.
+
+The response must match this contract exactly:
+
+```json
+{
+  "schemaVersion": 1,
+  "videoId": "abc123xyz89",
+  "title": "Video title",
+  "summary": "One concise paragraph summary",
+  "takeaways": ["Takeaway 1", "Takeaway 2"],
+  "actionItems": ["Action 1", "Action 2"],
+  "notablePoints": ["Point 1", "Point 2"],
+  "reportMarkdown": "---\ntitle: \"Video title\"\n...\n---\n\n## Summary\n..."
+}
+```
+
+Field rules:
+
+- `schemaVersion` must be `1`
+- `videoId` must echo the caller-provided video ID exactly
+- `title` must echo the caller-provided title exactly
+- `summary` must be a non-empty paragraph string
+- `takeaways`, `actionItems`, and `notablePoints` must be arrays of non-empty strings
+- `reportMarkdown` must contain the full markdown report described below
+
+### Frontmatter (required)
+
+Inside `reportMarkdown`, start with exactly this YAML frontmatter block:
+
+    ---
+    title: "..."
+    channel: "..."
+    topic: "..."
+    publishedDate: "..."
+    generatedAt: "YYYY-MM-DD"
+    pattern: "headless-youtube-analysis"
+    contentType: "..."
+    analysisDepth: "standard"
+    sourceUrl: "..."
+    githubRepos:
+      - "..."
+    ---
+
+### Sections (required, in this order)
+
+**## Summary** — 2-4 paragraphs of substantive synthesis. Lead with the core thesis or finding.
+
+**## Key Takeaways** — 4-8 bullets. Each bullet starts with a **bold phrase** followed by an em-dash and explanation. Use concrete details from the transcript, not generic summaries.
+
+**## Action Items** — 3-6 numbered items. Each starts with a **bold verb phrase**. Must be specific enough that a reader can act on them without re-watching the video.
+
+**## Supporting Details** — Contains these subsections:
+
+- **### Ideas / Methods / Claims** — Key concepts, frameworks, or arguments presented. Use bullet points with **bold lead-ins**.
+- **### Tools / Repos / Resources Mentioned** — Named tools, libraries, repos, URLs. Use bullet points with **bold names**.
+- **### Who This Is For** — 3-5 bullets describing the target audience with specificity.
+- **### Risks, Gaps, or Caveats** — Honest limitations, missing context, transcript quality issues. Use bullet points with **bold lead-ins**.
+
+### Formatting rules
+
+- Use `##` for top-level sections, `###` for subsections — never `#` (reserved for the UI)
+- Use **bold** generously for scanability — lead every bullet with a bold phrase
+- Use `inline code` for tool names, CLI commands, file paths, and code references
+- Use tables when comparing 3+ items with shared attributes
+- Keep paragraphs to 3-5 sentences max for readability
+- Use em-dashes (—) not hyphens for parenthetical asides
+
+## Content-type routing
+
+Use the caller-provided `contentType`.
+
+Interpretation guidelines:
+
+- `tutorial`: emphasize steps, setup, tools, implementation sequence
+- `finance`: emphasize theses, assumptions, catalysts, risk
+- `sermon`: emphasize themes, scripture, applications
+- `commentary`: emphasize claims, arguments, evidence, counterpoints
+- `interview`: emphasize frameworks, memorable insights, operator lessons
+- `case-study`: emphasize what happened, why it worked, transferable lessons
+- `general`: default balanced synthesis
+
+## GitHub repo handling
+
+If `githubRepos` are present:
+
+- mention them in `Tools / Repos / Resources Mentioned`
+- infer likely relevance from title/description/transcript
+- do not fabricate repository details you were not given
+
+## Quality bar
+
+- Be concise, specific, and operationally useful
+- Prefer concrete claims from transcript over generic summaries
+- Avoid filler, motivational language, and meta commentary
+- Never ask the user what output depth they want; use standard depth
+
+
+[Resolved Inputs]
+videoId: I1NdVZ6l5CQ
+title: Claude Code & Cowork Now Run 24/7 — Scheduled Tasks
+channel: Kenny Liao
+topic: ai-llms
+publishedDate: 2026-02-28
+sourceUrl: https://youtube.com/watch?v=I1NdVZ6l5CQ
+durationSeconds: 1107
+contentType: tutorial
+analysisDepth: standard
+description:
+Anthropic just released scheduled tasks in Claude Cowork, and it's one of the most genuinely useful AI features I've seen. In this video, I show you how scheduled tasks work, walk through three real workflows I use every day, and share a free plugin I built that brings the same functionality to Claude Code.
+
+My real use cases:
+- Automated weekly Stripe sales reports
+- Daily Substack Note idea generation
+- Nightly brain dump organization into my context system
+
+Join my free newsletter for weekly AI tips and techniques!
+https://theailaunchpad.substack.com/
+
+🎥 Watch Next
+1. Automate Linear tasks end-to-end with Claude Code: https://youtu.be/jsI18Htgf8k
+2. Claude Code Agent Teams: https://youtu.be/hZAk5zRfXBg
+3. Claude Skills: https://youtu.be/421T2iWTQio
+
+Apps I use:
+Get Wisper Flow Pro FREE for 14 days! https://ref.wisprflow.ai/kenneth-liao
+
+🛠️ Resources
+1. Free Scheduler Plugin: https://github.com/kenneth-liao/ai-launchpad-marketplace
+3. Claude Desktop App: https://claude.com/download
+
+🕒 Sections
+00:00 - Intro
+01:18 - Live Demos
+06:09 - Use Cases
+07:19 - How Scheduled Tasks Work in Cowork
+12:27 - Scheduled Tasks Claude Code Plugin
+
+✉️ For Business Inquiries:
+kennyliao@theailaunchpad.io
+
+#claudecode #cowork #openclaw
+
+githubRepos:
+https://github.com/kenneth-liao/ai-launchpad-marketplace
+
+[Instructions]
+- Use the provided contentType and standard depth; do not invent alternate modes.
+- If githubRepos are provided, mention them only in terms supported by title/description/transcript.
+- If the transcript is incomplete or noisy, note that in caveats and continue.
+- Make the output directly useful inside a transcript library UI.
+- CRITICAL: Return a single JSON object and nothing else.
+- summary must be a concise paragraph string, not an array.
+- takeaways, actionItems, and notablePoints must each be arrays of non-empty strings.
+- reportMarkdown must preserve the full markdown report as a string, including frontmatter and required sections.
+
+[Transcript]
+---
+video_id: "I1NdVZ6l5CQ"
+title: "Claude Code & Cowork Now Run 24/7 — Scheduled Tasks"
+channel: "Kenny Liao"
+topic: "ai-llms"
+published_date: "2026-02-28"
+ingested_date: "2026-03-02"
+source: "youtube"
+youtube_url: "https://youtube.com/watch?v=I1NdVZ6l5CQ"
+duration: 1107
+word_count: 3247
+---
+A lot of us have a dream of fully
+autonomous agents that do things for us
+while we sleep or are out running
+errands. And I think it's why projects
+like Open Claw have so much appeal.
+Anthropic just released scheduled tasks
+in Claude Co-work. And I think it takes
+us one step closer to full autonomy with
+AI agents. Now, I typically like to stay
+off of the AI hype train and focus more
+on genuine value that I think will
+continue being important years from now.
+Things like agent skills, for example.
+But I really do think that scheduled
+tasks is one of those features that is
+really going to change how we work with
+AI agents. If you don't really use
+co-work and you're more of a cloud code
+user like I am, scheduled tasks aren't
+available in cloud code. I'm not sure if
+they'll become available sometime in the
+future, but anyway, I'm going to share
+with you a plugin that I built that is
+going to give you all of the same
+capabilities for scheduling tasks in
+Cloud Code. And it's something I've been
+using to automate a lot of really useful
+workflows, which I'm excited to share
+with you right now. So, let me first
+share with you a few demos of what's
+possible with scheduled tasks, and then
+I'll show you how to use it in Cloud
+Co-work and also in Cloud Code using
+this plugin. Probably the most
+straightforward use case of this is
+having some kind of daily summary or
+brief. So I have a few here and these
+are ultimately just prompts that Claude
+will run on the schedule that you give
+it. We can take a look at the daily
+business brief. You can see what the
+prompt is. I want it to check my Google
+calendar for today's meetings and
+summarize my schedule for both today and
+tomorrow so I can see what's coming up
+ahead. Check all my unread emails and
+categorize them. and then summarize them
+by priority and then check to see if
+there were any sentry errors overnight
+in my production server. So these are
+just specific things I wanted to already
+have ready waiting for me when I start
+my day in the morning. And you can see
+on the left I have some scheduled tasks
+that have already ran these last few
+days. So if I click on for example the
+daily news brief for this morning, I can
+click on this report that was generated
+and this is for my daily AI news brief.
+So I'm going to get a report of all the
+trending AI news. And this is really
+nice to not have to even open cloud code
+or trigger a slash command or a skill,
+but just have this be ready for me when
+I open up my computer and just be able
+to read what is the top news right now.
+Cloud Sonnet 5 spotted in the wild. I
+hope so. But yeah, having daily briefs
+or reports are one really useful use
+case and it's super easy to set them up.
+Here's another example of a weekly
+scheduled task that Cloud Code set up
+using the plug-in I'm going to share
+with you where every week on Monday
+morning, this report is generated and it
+pulls all of the transactions data from
+my Stripe account. So, it's able to get
+a pulse on my business, run an analysis,
+and again, this is just going to be
+waiting for me. Another use case I'm
+really excited about which I just
+started this morning is I have an idea
+bank for notes that I want to publish to
+Substack which are just kind of like
+tweets on X and I have a scheduled task
+that runs every morning using specific
+skills for cloud code to write in my
+voice and following best practices for
+writing Substack notes. It'll use those
+skills and it'll write three notes from
+the idea bank that I have and then put
+them into this staging area for me. This
+runs now automatically every morning so
+that I always have notes ready to be
+posted. So I can just come over here and
+copy this text directly and then go over
+to Substack and it's ready to post just
+like that. But you could even automate
+this as part of the scheduled task which
+I have before where because I have
+playright MCP and cloud is able to
+control the browser, it can actually go
+as far as scheduling three separate
+tasks to post each individual note at
+different times in the day. So you could
+automate that entire flow. Right now,
+I'm keeping it with the staging area
+because I actually want to review them
+and uh just make any tweaks that I want
+before actually posting them. But you
+can see how incredibly powerful this is.
+Finally, one other use case which I'm
+also really excited about is the ability
+to just brain dump into a specific file
+throughout the day. So, I'll usually
+record things in here with voice like
+something I learned or a fact I want to
+share with people on Substack or YouTube
+or maybe I have an idea for a YouTube
+video, etc. I'll just voice record it
+into this brain dump and this file will
+grow throughout the day. And I have a
+scheduled task that runs every night,
+which I'll show you here. And you can
+see the prompt for this workflow. But
+essentially, it's going to read the
+brain dump and then it's going to parse
+all of the different line items in the
+brain dump and then organize them into
+the appropriate destination files. And
+that includes the context system for my
+personal assistant. So, if I head over
+to my user level.cloud cloud folder.
+Here you can see I have a core context
+system and I have a bunch of files in
+here like identity, preferences,
+projects, relationships, even personal
+stuff. And the scheduled task will
+organize all of that brain dump into
+these core context files. So it keeps my
+personal assistant up to date
+consistently and I don't have to worry
+about this anymore. I don't have to plug
+it in using hooks every time I talk to
+Claude. Now it just runs on an automated
+schedule without me ever noticing it in
+the background. So those are actual use
+cases that I'm using it for and I feel
+like I'm barely scratching the surface.
+Honestly, I'm excited to automate so
+much more with scheduled tasks. But here
+are some examples of the best use cases
+that Enthropic actually recommends. So
+like we covered earlier, you could do
+daily briefings or weekly reports. You
+could also do recurring research. So if
+you need to do competitor research, for
+example, I really like this idea of file
+organization. So if you have a folder
+where you just tend to dump files and
+you want something to always keep it
+organized, then you can do that with
+scheduled tasks. And then if you are
+working with a team, you can send team
+updates either through email or Slack or
+Discord. So hopefully that gives you a
+good idea of all the things you can do
+with this new feature. Now I'm going to
+show you how to do it first in Cloud
+Co-work and then in Cloud Code using the
+plugin. If you're enjoying this content,
+consider subscribing to my newsletter on
+Substack where I share actionable AI
+tips and techniques every week as well
+as more in-depth tutorials.
+To get started, you're going to want to
+update your Claude desktop app. And I'm
+on Mac. I'm currently on version
+1.1.4498.
+And scheduled tasks are available to me.
+I read online someone complaining that
+it wasn't yet available on Windows. I
+can't validate if that's true, but if
+it's not available for you on Windows,
+then you can definitely check out my
+plugin after this, which should work in
+cloud code across all platforms.
+Once your app is updated, you're going
+to see a new menu item on the sidebar
+here. So, you can open the sidebar on
+the left and then you'll see the
+scheduled menu. So when you click on
+that, you will probably not have any
+tasks here, but any scheduled tasks will
+show up here. You can also invoke it
+using a slash command in cloud co-work,
+which is slash schedule. And here's the
+caveat about running scheduled tasks in
+co-work. Both your computer and this app
+have to be running for the scheduled
+task to actually succeed. So if your
+computer is off then the task won't run
+but also if your computer is on and you
+don't have this claude app open then the
+task also won't run. Claude co-work will
+attempt to run those tasks the next time
+you open up the app. So it'll have that
+backlog of missed tasks and it'll try to
+run them the next time you open the app.
+But again that's not guaranteed.
+So that is one drawback of scheduled
+tasks in co-work. If you use the plugin
+in cloud code, you won't have the
+problem of having to have the app open
+because it's ran natively on your
+computer. So it doesn't depend on the
+cloud app itself. But anyway, to create
+a new task, you can just click on this
+button. And essentially what a task is
+is just a prompt. And there's a lot of
+ways you can construct this prompt. If
+we look at this example of a daily
+briefing, the prompt is check my Google
+calendar for today's meetings and
+summarize my unread emails. Highlight
+anything urgent. So you can give just a
+straight prompt like that. But you can
+also invoke specific slashcomands or
+skills or specify certain MCP servers.
+And that's because this is built into
+cloud co-work. It's using cloud code
+under the hood. So, however you have
+your cloud code configured, it's going
+to be able to use all of those skills
+and MCP servers that you have. So, here
+as a simple example, I'm creating an
+email brief where I want Claude to
+organize all of my unread emails for the
+day and give me a highle summary with
+emails ranked by priority. The nice
+thing is you can also choose the model
+that you want to run it on. So for a
+task like this, you probably don't need
+Opus and you can save some usage by
+using Sonnet 4.6. You can also select
+the folder that you want to work in
+since this is using cloud co-work which
+spins up a VM on your local system based
+on your working directory. And then at
+the very bottom is where you're going to
+specify the frequency. We can set it up
+hourly, daily, weekday, or weekly. You
+can also set it to manual, which
+essentially just becomes a slash
+command. For example, for this one, I
+can set it to daily, and then choose the
+time that I want to run it at, which is
+9:00 a.m. You can pretty much set any
+kind of schedule that you want here.
+Once you're done, you can hit save, and
+then you'll see your new scheduled task
+here, and you can click into it if later
+on you want to read what the actual
+instructions were. You can edit it here
+and adjust the prompt. And you can also
+run it now. And I recommend doing this
+for all of your new scheduled tasks to
+test them and just make sure that it
+actually works so that it's ready to go
+when you want it to run on an automated
+schedule. So I can click run now and we
+can view it here. You'll notice that it
+gets added to this new section for
+scheduled. So now you can see this task
+is kicking off and because I'm connected
+to my MCP servers in cloud code, it's
+able to access all of my emails. Notice
+at the bottom also that we have sonnet
+4.6 just like we set up inside of the
+task. So this is just going to be your
+normal claude co-work now running the
+prompt that we gave it. Here we can see
+my email brief with the emails organized
+by priority and a highle overview.
+We have some feedback for one of my
+products and then new subscriber to the
+newsletter and then some lower priority
+stuff. So, if you're someone that gets a
+lot of emails for your business, you can
+imagine how incredibly useful this would
+be to have this brief every single
+morning and all of the urgent matters
+surface to you right away with this
+highle summary. Now, if you want the
+ability to schedule tasks just like in
+Cloud Co-work, but do it in Cloud Code,
+which is my preferred way, then you can
+head over to the AI Launchpad
+Marketplace. It's a free marketplace
+that I have on GitHub, and you can
+install the plugin I'm about to show
+you. So, this plug-in is going to have
+several scripts for actually creating
+the scheduled tasks, and it's also going
+to be packaged into this skill to make
+it really easy for cloud code to know
+how to create these scheduled tasks. And
+it's basically going to be using the
+built-in cron tools in your operating
+system. Because it's a skill, you can
+just tell Claude that you want to
+schedule a task, and it should know that
+it has this newuler that it can use. So,
+for example,
+create a new scheduled task that runs
+every night at 10 p.m. that looks at my
+project and finds any unused files or
+trash files, deprecated files, etc. that
+can be cleaned up to keep the project
+concise or any files that are out of
+place and should be reorganized and then
+creates a report and saves it to
+docs/plans.
+No action should be taken. This is just
+to create the report on the suggested
+cleanup for the project. It's
+automatically going to recognize that it
+needs to use this plugin to create the
+scheduled task. Cloud is actually going
+to run it by you and then just make sure
+that everything looks correct before
+creating the scheduled task. It checked
+to make sure that this folder actually
+exists and then it sees that there are
+some existing tasks. So, it wants to add
+this new one which is going to be
+nightly project cleanup report every day
+10 p.m. Yeah, that's right. recurring
+frequency and there's a timeout. So
+these things are kind of for safety so
+that it's not just running forever and
+then it can actually give it specific
+permissions only the needed permissions
+to keep the actions more safe rather
+than just giving it for example bypass
+all permissions. And it can also specify
+if you have outputs for the scheduled
+task. For example, if you're going to
+generate a report like we are in this
+case, you can specify the output
+directory here. So it's telling me that
+the prompt is going to have Claude scan
+the full project, compare it against
+claude.md for structure conventions,
+identify unused files, etc., and then
+write a report to the docs plans. And
+I'll just say yes. So you can see my
+task got created and I got this popup
+that a bash background activity was
+started. So that's normal because it is
+using bash to create these background
+tasks. There's also going to be a
+desktop notification in the same way
+when the task gets completed. So you'll
+actually be notified in the morning or
+whenever your task is scheduled and
+you'll know that it successfully ran.
+And once you install the plugin, you can
+run it from any project, which means
+that in any project, you can go to
+yourcloud folder. And within that
+projectscloud
+folder, you're going to have this new
+folder created called scheduler. And in
+here is where you're going to have all
+of the files for scheduled tasks. So
+you're going to have a registry JSON,
+which is a single JSON file that tracks
+all of your tasks. This is for my daily
+AI news brief. And here you can see the
+prompt for this. You can also see what
+the schedule is here, the working
+directory, the output directory, etc.
+For the nightly brain dump, we have
+these specific tools that we're
+allowing.
+Finally, here at the bottom, we have our
+new nightly project cleanup report. So
+you can always come in here and see what
+tasks you have or you can just ask
+Claude, which is typically what I do,
+what are our active tasks, and it'll
+summarize basically this registry JSON
+for you. And then in this folder, you're
+also going to have three other
+directories. One is logs, which is just
+going to have a log for every single job
+that's ran. If you ever want to see what
+actually happened or if there was an
+error or anything, then you can click
+into one of these logs and you'll see
+everything that was ran. You also have
+results. So if you don't specify a
+output directory for running something,
+then the output from any job will just
+default to this results folder and this
+will be organized by day. So you don't
+need to specify an output directory
+unless you want these things being saved
+to a specific place in which case you
+can just tell Claude in that initial
+prompt. Finally, you have this wrappers
+folder which is the actual script that
+Claude generates to run this scheduled
+task. And this isn't super important,
+but if you wanted to look at what it
+actually generates underneath the hood,
+this is basically it. And here you can
+see for the daily Substack note, this is
+the prompt that we're passing to Claude.
+And it's basically running Claude in
+bash with this input prompt.
+If you made it this far, I want to thank
+you so much for watching this video. I
+hope you got a lot out of it. And if you
+did, please hit the like and subscribe
+for more content like this. And if you
+are interested in moving towards more
+autonomous workflows, then check out
+these two videos on your screen for
+resolving linear issues end to end and
+also working with agent teams to tackle
+bigger problems. Thanks again so much
+for watching and I'll see you in the
+next one.
+&gt;&gt; [music]
+
+warning: Under-development features enabled: default_mode_request_user_input. Under-development features are incomplete and may behave unpredictably. To suppress this warning, set `suppress_unstable_features_warning = true` in /Users/ossieirondi/.codex/config.toml.
+mcp: context7 starting
+mcp: context7 ready
+mcp startup: ready: context7
+exec
+/bin/zsh -lc 'date +%F' in /Users/ossieirondi/Projects/transcript-libraryexec
+/bin/zsh -lc "sed -n '1,200p' /Users/ossieirondi/.codex/superpowers/skills/using-superpowers/SKILL.md" in /Users/ossieirondi/Projects/transcript-library succeeded in 0ms:
+2026-03-12
+ succeeded in 0ms:
+---
+name: using-superpowers
+description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+---
+
+<EXTREMELY-IMPORTANT>
+If you think there is even a 1% chance a skill might apply to what you are doing, you ABSOLUTELY MUST invoke the skill.
+
+IF A SKILL APPLIES TO YOUR TASK, YOU DO NOT HAVE A CHOICE. YOU MUST USE IT.
+
+This is not negotiable. This is not optional. You cannot rationalize your way out of this.
+</EXTREMELY-IMPORTANT>
+
+## How to Access Skills
+
+**In Claude Code:** Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
+
+**In other environments:** Check your platform's documentation for how skills are loaded.
+
+# Using Skills
+codex
+{"schemaVersion":1,"videoId":"I1NdVZ6l5CQ","title":"Claude Code & Cowork Now Run 24/7 — Scheduled Tasks","summary":"Kenny Liao argues that Anthropic’s new scheduled tasks feature is one of the first genuinely practical steps toward autonomous AI workflows because it turns Claude prompts into recurring background jobs that deliver useful output without manual triggering. The video combines live demos in Claude Cowork with a walkthrough of Liao’s free Claude Code scheduler plugin, showing how recurring briefs, Stripe reporting, Substack drafting, and nightly brain-dump organization can all be automated with existing skills, MCP servers, and OS-level cron tooling.","takeaways":["Scheduled tasks are framed as practical autonomy, not hype, because they let Claude run useful recurring prompts while the user is away.","Claude Cowork scheduled tasks can reuse the same skills, slash commands, MCP servers, model choices, and working directories already configured in Claude Code.","The strongest use cases in the video are recurring briefs and cleanup workflows: daily email/news summaries, weekly Stripe analysis, Substack draft generation, and nightly context-file maintenance.","Cowork scheduling has an operational limitation: both the computer and the Claude desktop app need to be running, and missed jobs are only retried opportunistically when the app reopens.","Liao’s free scheduler plugin extends similar behavior to Claude Code by creating cron-backed jobs on the local machine, avoiding dependence on the desktop app being open.","The plugin adds guardrails such as explicit timeouts, scoped permissions, output directories, a task registry, logs, generated wrappers, and human review before task creation."],"actionItems":["Install the latest Claude desktop app and verify the `Scheduled` sidebar or `/schedule` command is available before designing Cowork automations.","Start with one high-value recurring brief such as email triage, calendar summary, news monitoring, or a weekly business report, then use `Run now` to validate the prompt end to end.","If you prefer Claude Code, install the free scheduler plugin from `kenneth-liao/ai-launchpad-marketplace` and create cron-backed tasks for project reports or personal workflows.","Define explicit output locations like `docs/plans` when a task should generate artifacts, so reports do not disappear into default scheduler results folders.","Use least-privilege permissions and timeouts for each scheduled job, especially for tasks that touch files, browser automation, or external systems."],"notablePoints":["The video distinguishes Cowork scheduling from Claude Code scheduling and treats Cowork as convenient but app-dependent, while the plugin is positioned as more native and reliable.","A notable pattern is combining scheduled tasks with existing skills so the automation preserves voice, formatting rules, or workflow conventions instead of sending a raw generic prompt.","The Substack example intentionally stops at a staging area rather than auto-posting, which shows a practical human-in-the-loop design choice for content quality control.","The nightly brain-dump workflow is less about summarization and more about continuously maintaining a structured personal context system for future assistant interactions.","Anthropic-recommended use cases mentioned include recurring research, folder organization, and team updates over channels like email, Slack, or Discord."],"reportMarkdown":"---\ntitle: \"Claude Code & Cowork Now Run 24/7 — Scheduled Tasks\"\nchannel: \"Kenny Liao\"\ntopic: \"ai-llms\"\npublishedDate: \"2026-02-28\"\ngeneratedAt: \"2026-03-12\"\npattern: \"headless-youtube-analysis\"\ncontentType: \"tutorial\"\nanalysisDepth: \"standard\"\nsourceUrl: \"https://youtube.com/watch?v=I1NdVZ6l5CQ\"\ngithubRepos:\n  - \"https://github.com/kenneth-liao/ai-launchpad-marketplace\"\n---\n\n## Summary\nKenny Liao presents scheduled tasks as a genuinely useful automation layer for Claude rather than another speculative “agent” feature. His core claim is that recurring prompts become much more valuable when they run automatically and leave finished work waiting for you, whether that work is a morning brief, a weekly business report, or a nightly file-organization pass.\n\nThe first half of the video is demo-driven. Liao shows recurring workflows he actually uses: a daily business brief that checks calendar, email, and Sentry; a weekly Stripe sales analysis; a daily Substack note drafting flow; and a nightly brain-dump organizer that updates a structured personal context system. The throughline is not novelty but removal of repetitive setup and prompting.\n\nHe then explains how scheduled tasks work inside Claude Cowork. Tasks are configured as prompts with a selected model, working directory, and frequency, and they can use the same skills, slash commands, and MCP servers already available in Claude Code. That gives the feature leverage, but it also introduces a runtime caveat: Cowork jobs only run reliably when the machine and the Claude desktop app are both open.\n\nTo address that limitation, Liao shares a free Claude Code scheduler plugin that uses OS cron tooling to create recurring local jobs. The plugin stores task metadata in a scheduler registry, writes logs and results to predictable folders, generates wrapper scripts, and supports safer configuration choices like limited permissions, timeouts, and optional output directories.\n\n## Key Takeaways\n- **Scheduled prompts become real workflows** — Liao’s main point is that the value comes from having useful work already completed when you sit down, not from watching the agent act in real time.\n- **Cowork inherits Claude Code capabilities** — Because scheduled tasks use the Claude Code stack underneath, they can call existing `skills`, `slash commands`, and configured `MCP servers` rather than living in a separate automation silo.\n- **Recurring briefs are the easiest starting point** — Daily AI news, calendar plus email triage, and weekly Stripe reporting are presented as low-friction automations with immediate payoff.\n- **Human review still matters** — In the Substack workflow, Liao intentionally stages note drafts for review instead of fully auto-posting them, which keeps quality control in the loop.\n- **Context maintenance is a powerful backend use case** — The nightly brain-dump organizer shows that scheduled tasks are useful not just for summaries but for continuously updating a personal assistant’s structured memory files.\n- **Cowork has an uptime dependency** — A scheduled task may be missed if the app is closed or the computer is off, and replay behavior on reopen is best-effort rather than guaranteed.\n- **Claude Code plugin avoids app-open dependency** — The scheduler plugin runs natively on the machine via cron, so it is better suited to people who live in `Claude Code` instead of the desktop app.\n- **Operational safety is part of the design** — Timeouts, scoped permissions, explicit output directories, a registry file, and per-job logs make the plugin feel more like an automation system than a one-off script hack.\n\n## Action Items\n1. **Update Claude Desktop** — Install the latest desktop app version and confirm the `Scheduled` sidebar entry or `/schedule` command appears before attempting Cowork-based automation.\n2. **Prototype one recurring brief** — Create a narrow daily or weekly task such as email prioritization, a news brief, or a Stripe report, then use `Run now` to verify model choice, permissions, and output quality.\n3. **Adopt the scheduler plugin for Claude Code workflows** — If you prefer local execution, install the scheduler plugin from the `ai-launchpad-marketplace` repo and let Claude create cron-backed jobs through the provided skill.\n4. **Define artifact destinations up front** — For tasks that generate reports, specify an output path like `docs/plans` so outputs land where your team already reviews them.\n5. **Constrain automation scope** — Add timeouts, restrict permissions, and separate “report-only” jobs from “take action” jobs so recurring tasks stay safe and debuggable.\n\n## Supporting Details\n### Ideas / Methods / Claims\n- **Practical autonomy over hype** — Liao explicitly distances this feature from AI hype and argues it matters because it solves recurring work he expects to remain valuable over time.\n- **Prompt-first scheduling model** — A scheduled task is essentially a saved prompt plus runtime configuration such as model, working directory, and recurrence.\n- **Leverage existing agent infrastructure** — The video emphasizes that scheduled jobs can invoke the same skills and MCP integrations the user already depends on in Claude Code.\n- **Deliver work before the workday starts** — Several examples center on front-loading useful decisions so the user opens the computer to finished analysis rather than a blank chat box.\n- **Separate reporting from execution** — In the cleanup-report example, the scheduled task is intentionally limited to scanning, recommending, and writing a report rather than mutating the project automatically.\n\n### Tools / Repos / Resources Mentioned\n- **`Claude Cowork`** — Anthropic’s environment where native scheduled tasks appear in the desktop app sidebar and via `/schedule`.\n- **`Claude Code`** — Liao’s preferred environment, used as the mental model and runtime base for the plugin approach.\n- **`ai-launchpad-marketplace`** — Free GitHub marketplace repo that contains the scheduler plugin and supporting scripts: `https://github.com/kenneth-liao/ai-launchpad-marketplace`\n- **`Claude Desktop App`** — Required for the native Cowork feature walkthrough; linked in the description as `https://claude.com/download`.\n- **`Stripe`** — Used in the weekly sales-report example to pull transaction data and generate a business analysis.\n- **`Substack`** — Used in the daily note-generation example, with staging favored over fully automatic posting.\n- **`Playwright MCP`** — Mentioned as the mechanism that could automate browser posting flows if the user wants end-to-end scheduling.\n- **`Sentry`** — Checked in the morning business brief example to surface production issues from overnight.\n- **`cron` / built-in OS scheduling tools** — The underlying mechanism the plugin uses to create recurring local jobs.\n- **`registry.json`, `logs/`, `results/`, `wrappers/`** — The main scheduler artifacts created inside the project-level `.claude/scheduler` directory.\n\n### Who This Is For\n- **Claude power users** — People already using `Claude Code`, custom skills, and MCP servers who want recurring jobs without rebuilding their tooling stack.\n- **Solo operators and creators** — Founders, newsletter writers, and indie builders who benefit from recurring briefs, content staging, and lightweight reporting.\n- **Developers managing active projects** — Teams or individuals who want scheduled audits, cleanup reports, file organization, or overnight monitoring outputs.\n- **Users building a persistent assistant context** — Anyone maintaining structured memory files or personal operating documents that can be updated from recurring notes and brain dumps.\n- **Automation-curious practitioners who still want oversight** — Viewers interested in autonomous workflows but not ready to hand off irreversible actions without review.\n\n### Risks, Gaps, or Caveats\n- **Cowork runtime dependency** — Native scheduled tasks depend on both the machine and the Claude app being open, which limits reliability for true unattended execution.\n- **Platform availability uncertainty** — The video mentions an online complaint that Windows support may lag, but Liao does not verify that claim directly.\n- **Plugin details are shown at a high level** — The repo is linked and file structure is demonstrated, but the transcript does not provide exhaustive installation or permission-model documentation.\n- **Automation can outrun review discipline** — The examples are powerful enough to automate posting or file actions, but the safest demonstrated workflows keep a human approval step in place.\n- **Transcript is slightly noisy** — Some product terms and phrases appear imperfectly transcribed, but the main workflow descriptions and caveats remain clear enough to analyze reliably."}
+tokens used
+24,201

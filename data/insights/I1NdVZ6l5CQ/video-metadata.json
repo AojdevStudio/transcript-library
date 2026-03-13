@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "source": "yt-dlp",
+  "videoId": "I1NdVZ6l5CQ",
+  "title": "Claude Code & Cowork Now Run 24/7 — Scheduled Tasks",
+  "channel": "Kenny Liao",
+  "topic": "ai-llms",
+  "publishedDate": "2026-02-28",
+  "sourceUrl": "https://youtube.com/watch?v=I1NdVZ6l5CQ",
+  "durationSeconds": 1107,
+  "description": "Anthropic just released scheduled tasks in Claude Cowork, and it's one of the most genuinely useful AI features I've seen. In this video, I show you how scheduled tasks work, walk through three real workflows I use every day, and share a free plugin I built that brings the same functionality to Claude Code.\n\nMy real use cases:\n- Automated weekly Stripe sales reports\n- Daily Substack Note idea generation\n- Nightly brain dump organization into my context system\n\nJoin my free newsletter for weekly AI tips and techniques!\nhttps://theailaunchpad.substack.com/\n\n🎥 Watch Next\n1. Automate Linear tasks end-to-end with Claude Code: https://youtu.be/jsI18Htgf8k\n2. Claude Code Agent Teams: https://youtu.be/hZAk5zRfXBg\n3. Claude Skills: https://youtu.be/421T2iWTQio\n\nApps I use:\nGet Wisper Flow Pro FREE for 14 days! https://ref.wisprflow.ai/kenneth-liao\n\n🛠️ Resources\n1. Free Scheduler Plugin: https://github.com/kenneth-liao/ai-launchpad-marketplace\n3. Claude Desktop App: https://claude.com/download\n\n🕒 Sections\n00:00 - Intro\n01:18 - Live Demos\n06:09 - Use Cases\n07:19 - How Scheduled Tasks Work in Cowork\n12:27 - Scheduled Tasks Claude Code Plugin\n\n✉️ For Business Inquiries:\nkennyliao@theailaunchpad.io\n\n#claudecode #cowork #openclaw",
+  "githubRepos": ["https://github.com/kenneth-liao/ai-launchpad-marketplace"],
+  "contentType": "tutorial",
+  "analysisDepth": "standard",
+  "updatedAt": "2026-03-13T04:48:06.947Z"
+}

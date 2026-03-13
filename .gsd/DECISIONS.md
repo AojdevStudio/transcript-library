@@ -44,3 +44,5 @@
 - "Map broken catalog lookup errors at the analyze route boundary into a retryable `catalog-rebuild-needed` outcome with the supported `npx tsx scripts/rebuild-catalog.ts` repair command instead of surfacing an opaque 500."
 - "Promote worker failure summaries inside `writeRunLifecycle` by reusing stdout/stderr evidence from the current run logs so `run.json`, `status.json`, and route payloads share one durable top-line cause."
 - "Constrain the Codex recovery path with a checked-in structured-analysis JSON schema so server-owned provider selection can switch to a real working provider without weakening the app's strict artifact contract."
+- "Repair historical `missing-structured-analysis` directories in place by reusing validated markdown→structured derivation, but treat `artifacts-without-run` as rerun-only and never synthesize missing durable run history."
+- "Treat artifact directories without a durable `run.json` as `retry-needed` eligibility even when canonical markdown exists, and allow `/api/analyze` reruns whenever reconciliation marks the latest state as a retryable mismatch."

@@ -123,4 +123,51 @@ describe("POST /api/analyze", () => {
 
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
+
+  it("allows a clean rerun when reconciliation marks artifacts-without-run as retry-needed", async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "analyze-route-"));
+    const transcriptPath = path.join(tmpDir, "part-1.md");
+    fs.writeFileSync(transcriptPath, "# Transcript\n\nRetry content.");
+
+    mockAbsTranscriptPath.mockReturnValue(transcriptPath);
+    mockGetVideo.mockReturnValue({
+      videoId: "abc123xyz89",
+      title: "Retry Video",
+      channel: "Channel",
+      topic: "Topic",
+      publishedDate: "2026-03-12",
+      parts: [{ chunk: 1, wordCount: 123, filePath: "part-1.md" }],
+    });
+    mockGetAnalyzeStartEligibility.mockReturnValue({
+      canStart: false,
+      outcome: "retry-needed",
+      retryable: true,
+      message:
+        "existing analysis artifacts need a clean rerun because durable run history is missing",
+      snapshot: { lifecycle: null },
+    });
+    mockReconcileRuntimeArtifacts.mockReturnValue({
+      status: "mismatch",
+      reasons: [
+        {
+          code: "artifacts-without-run",
+          message: "Canonical artifacts exist without a matching durable run record.",
+        },
+      ],
+    });
+
+    const { POST } = await import("@/app/api/analyze/route");
+    const response = await POST(
+      new Request("http://localhost/api/analyze?videoId=abc123xyz89", {
+        method: "POST",
+      }),
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ ok: true, status: "running", outcome: "started" });
+    expect(mockSpawnAnalysis).toHaveBeenCalledTimes(1);
+
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
 });

@@ -60,7 +60,7 @@ export async function POST(req: Request) {
   const eligibility = getAnalyzeStartEligibility(videoId);
   const reconciliation = reconcileRuntimeArtifacts(videoId);
   if (!eligibility.canStart) {
-    if (eligibility.outcome === "already-analyzed" && reconciliation.status === "mismatch") {
+    if (reconciliation.status === "mismatch" && eligibility.retryable) {
       // Allow clean reruns when durable reconciliation marks the latest artifacts as inconsistent.
     } else {
       return NextResponse.json(

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-03-13T03:16:50.757Z",
+  "generatedAt": "2026-03-13T04:48:03.035Z",
   "csvPath": "/Users/ossieirondi/Projects/desktop-commander/repos/playlist-transcripts/youtube-transcripts/index/videos.csv",
   "liveDbPath": "/Users/ossieirondi/Projects/transcript-library/data/catalog/catalog.db",
-  "tempDbPath": "/Users/ossieirondi/Projects/transcript-library/data/catalog/catalog.db.tmp-efe45758d13b",
+  "tempDbPath": "/Users/ossieirondi/Projects/transcript-library/data/catalog/catalog.db.tmp-f6da704e4606",
   "validationReportPath": "/Users/ossieirondi/Projects/transcript-library/data/catalog/last-import-validation.json",
   "catalogVersion": "201c12bb2e86e430100653729d6d3aa6a35c12f178124ce5f9daeecb14929bf0",
   "checkOnly": true,

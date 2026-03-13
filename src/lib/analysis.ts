@@ -811,13 +811,16 @@ export function getAnalyzeStartEligibility(videoId: string): AnalyzeStartEligibi
   }
 
   if (artifactsPresent && snapshot.status === "complete") {
+    const hasDurableRun = snapshot.run !== null;
     return {
       canStart: false,
-      outcome: "already-analyzed",
-      retryable: false,
+      outcome: hasDurableRun ? "already-analyzed" : "retry-needed",
+      retryable: !hasDurableRun,
       hasArtifacts: true,
       snapshot,
-      message: "analysis already exists",
+      message: hasDurableRun
+        ? "analysis already exists"
+        : "existing analysis artifacts need a clean rerun because durable run history is missing",
     };
   }
 

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "videoId": "d8d9EZHU7fw",
+  "runId": null,
+  "status": "mismatch",
+  "resolution": "rerun-ready",
+  "retryable": true,
+  "checkedAt": "2026-03-13T03:25:43.574Z",
+  "detectedAt": "2026-03-13T03:25:43.574Z",
+  "resolvedAt": null,
+  "reasons": [
+    {
+      "code": "artifacts-without-run",
+      "severity": "failure",
+      "message": "Canonical artifacts exist without a matching durable run record."
+    }
+  ],
+  "artifactState": {
+    "canonicalAnalysis": true,
+    "structuredAnalysis": "missing",
+    "statusFile": true,
+    "runFile": false
+  },
+  "evidence": {
+    "stdoutTail": "so agent behavior is fully reconstructible; protect logs from agent write access\n6. **Add throttle controls and kill switches** — define rate limits on consequential actions (purchases, data writes, API calls) and ensure a human operator can halt agent execution at any point\n\n## Supporting Details\n\n### Ideas / Methods / Claims\n\n- **Zero Trust core tenets (applied to agents):**\n  - *Trust follows verification* — agents must prove identity before every action, not once at startup\n  - *Just-in-time vs just-in-case* — privilege is granted on demand for the minimum duration needed, then revoked\n  - *Pervasive controls* — security is distributed throughout the agent's execution path, not only at the perimeter\n  - *Assumption of breach* — design agent security assuming credentials are already stolen and the attacker has elevated privileges\n\n- **Agent threat surface taxonomy (Crume's model):**\n  1. Input layer — direct prompt injection\n  2. Reasoning layer — model/data/preference poisoning (training data, RAG context, policy files)\n  3. Interface layer — adversarial insertion at MCP calls or tool interfaces\n  4. Downstream services — exploitation of APIs, databases, spawned sub-agents\n  5. Credential store — credential theft, privilege escalation, new account creation\n\n- **Canary deployments** — proposed as a validation mechanism: drop an agent into a controlled environment first to observe behavior before wider deployment\n\n- **AI model scanning** — Crume notes the emergence of tools specifically for scanning AI models for latent vulnerabilities, analogous to endpoint and network scanners\n\n### Tools / Repos / Resources Mentioned\n\n- **Secrets vault** — referenced as the mandatory architecture for NHI credential storage; no specific vendor named, but the pattern is dynamic secrets management (e.g., HashiCorp Vault, AWS Secrets Manager pattern)\n- **AI firewall / AI gateway** — described as an enforcement layer for prompt injection detection and output inspection; Crume uses both terms interchangeably\n- **Tool registry** — a governance catalog of vetted APIs and tools agents may call; no specific implementation named\n- **IBM QRadar SIEM / CompTIA CySA+** — mentioned in description as a promoted certification course (not discussed in video content)\n- No GitHub repositories detected\n\n### Who This Is For\n\n- **Security architects and engineers** adding Zero Trust controls to agentic AI deployments\n- **AI/ML platform engineers** building or governing multi-agent orchestration systems\n- **CTOs and CISOs** evaluating risk posture for autonomous agent adoption\n- **Developers** building agent-integrated applications who need to understand the security primitives they must implement (credential management, tool scoping, logging)\n\n### Risks, Gaps, or Caveats\n\n- **No implementation specifics** — the video stays at the architectural/conceptual level; practitioners will need to map principles to specific tools (Vault, OPA, LangSmith, etc.) independently\n- **Sub-agent identity propagation is mentioned but not solved** — the claim that spawned sub-agents need their own NHIs is correct, but the mechanics of how a parent agent bootstraps scoped child credentials at runtime is not addressed\n- **Prompt injection countermeasures are shallow** — the AI firewall is offered as the defense, but detection accuracy, false positive rates, and adversarial bypass of the firewall itself are not discussed\n- **Assumption of breach is stated but not operationalized** — the video asserts the principle without providing a concrete example of how security design changes when you assume the attacker is already inside the agent runtime\n- **No discussion of multi-tenant agent environments** — the threat model implicitly assumes a single-organization deployment; cross-tenant isolation in shared agent infrastructure is out of scope\n- **Transcript quality is clean** — no notable noise or gaps observed; analysis reflects full content\n```\n",
+    "stderrTail": ""
+  }
+}

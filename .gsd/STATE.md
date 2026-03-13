@@ -1,7 +1,7 @@
 # GSD State
 
 **Active Milestone:** M002 — Reliability + Hosted Launch
-**Active Slice:** S02 — Historical Artifact Repair and Drift Recovery
+**Active Slice:** S03 — Source Repo Sync Contract and Auto-Refresh
 **Phase:** planning
 **Requirements Status:** 15 active · 10 validated · 3 deferred · 4 out of scope
 
@@ -17,4 +17,4 @@
 - None
 
 ## Next Action
-Plan slice S02 (Historical Artifact Repair and Drift Recovery).
+Plan slice S03 (Source Repo Sync Contract and Auto-Refresh).

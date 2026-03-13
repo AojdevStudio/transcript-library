@@ -55,7 +55,7 @@ This milestone is complete only when all are true:
 
   > After this: at least one currently failing video can complete an end-to-end analysis run again, and remaining failure modes produce concrete operator evidence instead of opaque exit-code-1 behavior.
 
-- [ ] **S02: Historical Artifact Repair and Drift Recovery** `risk:high` `depends:[S01]`
+- [x] **S02: Historical Artifact Repair and Drift Recovery** `risk:high` `depends:[S01]`
 
   > After this: known broken historical videos surface clear rerun-ready state, and repair paths can bring representative drifted artifacts back into a clean runtime state.
 

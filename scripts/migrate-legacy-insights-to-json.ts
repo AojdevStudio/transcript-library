@@ -84,7 +84,10 @@ function listLegacyMarkdownInsights(): LegacyInsightCandidate[] {
     .sort((a, b) => a.videoId.localeCompare(b.videoId));
 }
 
-function buildStructuredAnalysis(videoId: string, markdown: string): StructuredAnalysis {
+export function deriveStructuredAnalysisFromMarkdown(
+  videoId: string,
+  markdown: string,
+): StructuredAnalysis {
   const title = resolveInsightTitle(videoId) ?? readTitleFromFrontmatter(markdown);
   const curated = curateYouTubeAnalyzer(markdown);
 
@@ -115,7 +118,7 @@ function migrateLegacyInsight(
   checkOnly: boolean,
 ): { migrated: boolean; reason?: string } {
   const markdown = fs.readFileSync(candidate.legacyPath, "utf8");
-  const structured = buildStructuredAnalysis(candidate.videoId, markdown);
+  const structured = deriveStructuredAnalysisFromMarkdown(candidate.videoId, markdown);
   const dir = insightDir(candidate.videoId);
   const analysis = analysisPath(candidate.videoId);
   const legacy = legacyInsightPath(candidate.videoId);

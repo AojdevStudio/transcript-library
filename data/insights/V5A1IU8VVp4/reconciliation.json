@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "videoId": "V5A1IU8VVp4",
+  "runId": "legacy-20260308205303",
+  "status": "resolved",
+  "resolution": "resolved",
+  "retryable": false,
+  "checkedAt": "2026-03-13T04:48:03.266Z",
+  "detectedAt": "2026-03-13T04:48:03.257Z",
+  "resolvedAt": "2026-03-13T04:48:03.266Z",
+  "reasons": [],
+  "artifactState": {
+    "canonicalAnalysis": true,
+    "structuredAnalysis": "valid",
+    "statusFile": true,
+    "runFile": true
+  },
+  "evidence": {
+    "stdoutTail": "ock's `goose` coding agent early, then customized orchestration flow, prompts, skills, and tool integrations. The fork is intentional: owning the harness means owning the agent's behavior.\n\n### Tools / Repos / Resources Mentioned\n\n- **Stripe Minions** — Stripe's internal fully-unattended coding agent system, documented in their engineering blog.\n- **Stripe 2025 Annual Letter** — Source for the 1,300 PRs/week and $1.9 trillion volume figures.\n- **Stripe Minions Blog Post** — `stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents` — primary source for the architectural breakdown.\n- **`goose`** (Block) — Open-source coding agent that Stripe forked as the base for their custom Minions harness.\n- **Claude Code** — Used by Stripe engineers for in-loop (supervised) agentic coding alongside Minions.\n- **Cursor** — Also used by Stripe engineers for in-loop work; Cursor CLI can be programmatically integrated into out-loop systems.\n- **`pi.dev`** — Referenced as another example of a customizable coding agent (covered in the prior week's video).\n- **E2B, Modal** — Mentioned as ephemeral agent sandbox alternatives to self-managed EC2 for personal/smaller-scale out-loop deployments.\n- **EC2 (AWS)** — Infrastructure backing Stripe's dev box pool; full instances with source code and services preloaded.\n- **MCP (Model Context Protocol)** — Protocol underlying Stripe's ~500-tool integration layer and tool shed.\n- **Tactical Agentic Coding** — The presenter's own course, referenced as prior art for most architectural ideas covered in the Stripe post.\n\n### Who This Is For\n\n- **Mid-to-senior software engineers** already using AI coding tools who want to move beyond prompt-and-review workflows into autonomous, parallelized agent systems.\n- **Engineering leads and architects** evaluating whether to build custom agentic infrastructure vs. relying on off-the-shelf tools like Claude Code or Cursor.\n- **Developers working on large, mature codebases** (10,000+ files, proprietary libraries, compliance constraints) where generic agents underperform due to lack of domain context.\n- **Platform and developer productivity engineers** responsible for CI/CD, tooling, and developer environment infrastructure who are considering how to integrate agents into existing pipelines.\n- **Founders and technical decision-makers** at scaling companies who need to understand the architectural investment required to achieve production-grade agentic throughput.\n\n### Risks, Gaps, or Caveats\n\n- **Transcript is complete but dense** — The video moves quickly through six architectural components without deep implementation detail on any single one; the analysis reflects the level of specificity available in the source.\n- **Stripe's system is not open-source** — All architectural details come from Stripe's blog post and the presenter's interpretation. No code is available for inspection, and implementation specifics (e.g., how blueprints are authored, how the tool shed resolves tool selection) are not fully disclosed.\n- **Two-CI-round critique is speculative** — The presenter argues this limit is suboptimal, but acknowledges Stripe knows their cost/reliability tradeoffs better than outside observers. The critique is reasonable but unvalidated.\n- **ZTE as north star is aspirational, not demonstrated** — No team at serious scale has publicly documented prompt-to-production with zero human review. The presenter's 2026 prediction is a bet, not a confirmed trend.\n- **Goose fork details are thin** — The video confirms Stripe forked `goose` but does not detail which orchestration behaviors were modified or what Stripe-specific customizations were added beyond prompt/skill/tool changes.\n- **No discussion of agent failure modes or rollback** — The video covers validation (linting, 3M+ test suite) but does not address what happens when a Minion PR causes a regression post-merge, or how Stripe detects and remediates agentic errors in production.\n",
+    "stderrTail": ""
+  }
+}

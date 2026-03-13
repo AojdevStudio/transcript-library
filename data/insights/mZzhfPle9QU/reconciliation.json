@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "videoId": "mZzhfPle9QU",
+  "runId": null,
+  "status": "mismatch",
+  "resolution": "rerun-ready",
+  "retryable": true,
+  "checkedAt": "2026-03-13T03:25:43.576Z",
+  "detectedAt": "2026-03-13T03:25:43.576Z",
+  "resolvedAt": null,
+  "reasons": [
+    {
+      "code": "artifacts-without-run",
+      "severity": "failure",
+      "message": "Canonical artifacts exist without a matching durable run record."
+    }
+  ],
+  "artifactState": {
+    "canonicalAnalysis": true,
+    "structuredAnalysis": "missing",
+    "statusFile": true,
+    "runFile": false
+  },
+  "evidence": {
+    "stdoutTail": "or. Author notes there's no established evaluation framework yet; teams are using qualitative (\"vibes\") feedback loops over several weeks.\n- **Second brain concept**: a local project notes directory (`~/.claude/projects/`) that stores summaries, to-dos, and context checkpoints. Lazy-loaded per session rather than always in context.\n- **\"Bring the work to the context, not the context to the work\"**: argues against CEO/product/design agent architectures that spread shared context across isolated agents; instead keep tightly coupled reasoning in one session.\n- **Auto-compaction**: Claude summarizes the context window automatically when it grows long. Author leaves it enabled by default; only manually compacts when saving a context snapshot to the second brain.\n- **`--dangerously-skip-permissions`**: yolo mode for throwaway environments. Pair with `/permissions` allowlist to still block specific high-risk commands. Author bricked a Linux machine using it without guards.\n\n### Tools / Repos / Resources Mentioned\n\n- **Claude Code** (Anthropic) — primary tool throughout\n- **iTerm2** — preferred terminal; used for split panes, tabs, and renamed sessions for parallel instance management\n- **Xcode MCP** — iOS-specific MCP for build/run cycles; flagged as a necessary exception to the \"avoid MCPs\" heuristic\n- **Whisper** (speech-to-text overlay) — used at home to voice-prompt multiple Claude instances simultaneously\n- **Git worktrees** — for concurrent edits on the same repo across multiple Claude instances\n- **`/chrome` command** — built-in Claude Code browser automation; demonstrated navigating YouTube by screenshot interaction\n- **Figma MCP** — mentioned as a recommended addition for UI validation workflows\n- **Perretto (Perfetto)** — mentioned for mobile performance trace analysis via MCP\n- **Puppeteer** — mentioned as a web validation loop option alongside `/chrome`\n- **Hacker News** — used as a live example for skill/command creation demo\n- **Anthropic plugin directory** — referenced as a source for community-shared Claude Code plugins\n- Newsletter: https://getpushtoprod.substack.com\n\n### Who This Is For\n\n- Software engineers actively using or evaluating Claude Code for daily coding workflows\n- Engineers wanting to reduce per-task overhead through better CLAUDE.md configuration and validation loops\n- Team leads considering committing AI behavior rules (CLAUDE.md) to shared repositories\n- Engineers hitting context degradation or runaway token costs and unsure why\n\n### Risks, Gaps, or Caveats\n\n- **`--dangerously-skip-permissions` is genuinely dangerous**: the author confirms having bricked a Linux machine. This mode should be restricted to ephemeral containers or sandboxed VMs, not development machines.\n- **Transcript noise**: the transcript contains transcription artifacts (e.g., \"claw.md\", \"slashresentally\", \"peretto\") that indicate automated transcription from audio. All references have been interpreted by context; direct quotes from the transcript should be verified against the video.\n- **Opus-first recommendation is cost-intensive**: the suggestion to default to Opus 4.5 assumes an enterprise or employer-subsidized token budget. Cost-sensitive individual developers should benchmark Sonnet on their specific workflows before committing.\n- **\"Second brain\" workflow is underspecified**: the author references a separate video for the full system; the tip as presented lacks enough detail to implement without that supplementary content.\n- **Sub-agent advice is nuanced but may be misread**: the \"sub-agents are bad for shared context\" argument is valid, but the inverse — that all shared-context work must stay in one session — does not account for very long-running tasks where context window limits force decomposition regardless.\n- **No mention of security scanning, secrets management, or code review processes** — relevant omissions for engineers using Claude Code in production codebases with sensitive data.\n```\n",
+    "stderrTail": ""
+  }
+}

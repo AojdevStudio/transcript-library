@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 2,
+  "videoId": "I1NdVZ6l5CQ",
+  "runId": "20260313044805671-5a9690",
+  "provider": "codex-cli",
+  "command": "codex",
+  "args": [
+    "exec",
+    "--dangerously-bypass-approvals-and-sandbox",
+    "--skip-git-repo-check",
+    "-C",
+    "/Users/ossieirondi/Projects/transcript-library",
+    "--output-schema",
+    "/Users/ossieirondi/Projects/transcript-library/src/lib/structured-analysis.schema.json",
+    "-o",
+    "/Users/ossieirondi/Projects/transcript-library/data/insights/I1NdVZ6l5CQ/runs/20260313044805671-5a9690/provider-output.json",
+    "-"
+  ],
+  "lifecycle": "completed",
+  "startedAt": "2026-03-13T04:48:06.971Z",
+  "promptResolvedAt": "2026-03-13T04:48:05.672Z",
+  "pid": 82120,
+  "completedAt": "2026-03-13T04:49:12.705Z",
+  "exitCode": 0,
+  "artifacts": {
+    "structuredFileName": "analysis.json",
+    "canonicalFileName": "analysis.md",
+    "displayFileName": "claude-code-cowork-now-run-24-7-scheduled-tasks.md",
+    "metadataFileName": "video-metadata.json",
+    "stdoutFileName": "worker-stdout.txt",
+    "stderrFileName": "worker-stderr.txt",
+    "attemptDirectory": "runs/20260313044805671-5a9690",
+    "attemptRunFileName": "run.json",
+    "attemptStdoutFileName": "worker-stdout.txt",
+    "attemptStderrFileName": "worker-stderr.txt"
+  },
+  "status": "complete"
+}

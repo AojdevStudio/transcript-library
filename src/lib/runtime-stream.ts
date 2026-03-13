@@ -92,6 +92,12 @@ function buildPayload(videoId: string): RuntimeStreamPayload {
   const reconciliation = reconcileRuntimeArtifacts(videoId);
   const logs = readInsightLogTail(videoId, 12_000);
   const recentLogs = readInsightRecentLines(videoId, 12_000, 12);
+  const effectiveStatus =
+    reconciliation.status === "mismatch" ? ("failed" as const) : snapshot.status;
+  const effectiveLifecycle =
+    reconciliation.status === "mismatch"
+      ? ((snapshot.lifecycle ?? "reconciled") as string)
+      : snapshot.lifecycle;
   const retryGuidance =
     snapshot.status === "running"
       ? {
@@ -119,9 +125,9 @@ function buildPayload(videoId: string): RuntimeStreamPayload {
 
   return {
     videoId,
-    status: snapshot.status,
-    lifecycle: snapshot.lifecycle,
-    stage: resolveStage(snapshot.lifecycle, snapshot.status),
+    status: effectiveStatus,
+    lifecycle: effectiveLifecycle,
+    stage: resolveStage(effectiveLifecycle, effectiveStatus),
     startedAt: snapshot.startedAt,
     completedAt: snapshot.completedAt,
     error:

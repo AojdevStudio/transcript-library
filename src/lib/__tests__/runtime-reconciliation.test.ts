@@ -41,6 +41,62 @@ function writeValidStructured(videoId: string) {
   );
 }
 
+function writeHistoricalCompletedRunFixture(tmpDir: string, videoId = "hist123xy89") {
+  const dir = path.join(tmpDir, videoId);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, "analysis.md"),
+    [
+      "---",
+      'title: "Historical Fixture"',
+      "---",
+      "",
+      "## Summary",
+      "Historical markdown only.",
+    ].join("\n"),
+  );
+  fs.writeFileSync(
+    path.join(dir, "run.json"),
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        videoId,
+        provider: "claude-cli",
+        command: "claude",
+        args: ["-p"],
+        status: "complete",
+        startedAt: "2026-03-08T20:53:03.157Z",
+        promptResolvedAt: "2026-03-08T20:53:03.145Z",
+        pid: 23322,
+        completedAt: "2026-03-08T20:54:34.905Z",
+        exitCode: 0,
+        artifacts: {
+          canonicalFileName: "analysis.md",
+          displayFileName: "historical-fixture.md",
+          metadataFileName: "video-metadata.json",
+          stdoutFileName: "worker-stdout.txt",
+          stderrFileName: "worker-stderr.txt",
+        },
+      },
+      null,
+      2,
+    ),
+  );
+  fs.writeFileSync(
+    path.join(dir, "status.json"),
+    JSON.stringify(
+      {
+        status: "complete",
+        pid: 23322,
+        startedAt: "2026-03-08T20:53:03.157Z",
+        completedAt: "2026-03-08T20:54:34.905Z",
+      },
+      null,
+      2,
+    ),
+  );
+}
+
 describe("runtime reconciliation", () => {
   it("persists a durable mismatch record when a completed run is missing canonical artifacts", () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "runtime-reconciliation-"));
@@ -112,6 +168,31 @@ describe("runtime reconciliation", () => {
     });
     expect(record.detectedAt).toBeTruthy();
     expect(record.resolvedAt).toBeTruthy();
+  });
+
+  it("classifies a historical completed directory missing analysis.json without fabricating run history", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "runtime-reconciliation-"));
+    process.env.INSIGHTS_BASE_DIR = tmpDir;
+
+    writeHistoricalCompletedRunFixture(tmpDir);
+
+    const record = reconcileRuntimeArtifacts("hist123xy89");
+
+    expect(record).toMatchObject({
+      runId: "legacy-20260308205303",
+      status: "mismatch",
+      resolution: "rerun-ready",
+      retryable: true,
+      artifactState: {
+        canonicalAnalysis: true,
+        structuredAnalysis: "missing",
+        statusFile: true,
+        runFile: true,
+      },
+    });
+    expect(record.reasons).toEqual([
+      expect.objectContaining({ code: "missing-structured-analysis" }),
+    ]);
   });
 
   it("surfaces reconciliation mismatch through the insight route instead of silent success", async () => {
