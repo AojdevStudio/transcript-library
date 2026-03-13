@@ -6,13 +6,14 @@ Transcript Library is a private internal tool for a small friend group. The grou
 
 ## Core flow
 
-1. A video is added to the shared playlist and lands in the transcript repo.
-2. `npx tsx scripts/rebuild-catalog.ts` validates transcript metadata from `PLAYLIST_TRANSCRIPTS_REPO` and atomically publishes `data/catalog/catalog.db`.
-3. A user opens a video page and watches the YouTube video inside the app.
-4. The user starts analysis from the app.
-5. The server resolves metadata, builds a deterministic headless prompt, and launches the configured provider runtime.
-6. The runtime writes status, logs, metadata, run metadata, and markdown artifacts into `data/insights/<videoId>/`.
-7. The app reads those artifacts and renders the analysis alongside the video.
+1. A video is added to the shared playlist and lands in the upstream transcript repo.
+2. Transcript Library refreshes its local `PLAYLIST_TRANSCRIPTS_REPO` checkout through `node --import tsx scripts/refresh-source-catalog.ts` or `POST /api/sync-hook`.
+3. The refresh authority fast-forwards the local checkout, rebuilds SQLite, and writes `data/catalog/last-source-refresh.json` plus `data/catalog/last-import-validation.json`.
+4. A user opens a video page and watches the YouTube video inside the app.
+5. The user starts analysis from the app.
+6. The server resolves metadata, builds a deterministic headless prompt, and launches the configured provider runtime.
+7. The runtime writes status, logs, metadata, run metadata, and markdown artifacts into `data/insights/<videoId>/`.
+8. The app reads those artifacts and renders the analysis alongside the video.
 
 ## Major subsystems
 
@@ -40,22 +41,25 @@ This means operators can trust the video page first, then fall back to raw files
 The app supports two deployment modes controlled by the `HOSTED` environment variable:
 
 - **Local dev** (`HOSTED` unset): No authentication required. All API routes are open. No configuration needed to browse or iterate.
-- **Hosted** (`HOSTED=true`): Server startup runs a preflight check via `src/instrumentation.ts` that validates critical env vars (`PLAYLIST_TRANSCRIPTS_REPO`, `PRIVATE_API_TOKEN`). Missing vars fail the deploy early with actionable guidance.
+- **Hosted** (`HOSTED=true`): Server startup runs a preflight check via `src/instrumentation.ts` that validates both env presence and the source-refresh contract. Hosted startup now checks that `PLAYLIST_TRANSCRIPTS_REPO` is configured as an absolute-path git checkout, warns if the checkout is detached HEAD without `PLAYLIST_TRANSCRIPTS_BRANCH`, and warns when `last-source-refresh.json` or `last-import-validation.json` have not been produced yet.
 
 All internal API routes (`/api/*`) are protected by a shared private API boundary (`src/lib/private-api-guard.ts`). In hosted mode, callers must present `Authorization: Bearer <PRIVATE_API_TOKEN>`. In local dev, the guard is a no-op.
 
-The `/api/sync-hook` endpoint continues to accept its own `SYNC_TOKEN` for backward compatibility with existing webhook callers. `PRIVATE_API_TOKEN` is also accepted as a universal override on sync-hook.
+The `/api/sync-hook` endpoint is a refresh-only entrypoint. It continues to accept `SYNC_TOKEN` for dedicated webhook callers, and `PRIVATE_API_TOKEN` is also accepted as a universal override on sync-hook.
 
 In hosted mode, response payloads are sanitized to strip internal filesystem paths, provider details, and worker PIDs. Local dev responses include full diagnostic detail.
 
+The supported hosted contract is documented in `docs/operations/source-repo-sync-contract.md`.
+
 ### Required env vars (hosted mode)
 
-| Variable                    | Purpose                                            |
-| --------------------------- | -------------------------------------------------- |
-| `HOSTED`                    | Set to `true` or `1` to enable hosted mode         |
-| `PLAYLIST_TRANSCRIPTS_REPO` | Absolute path to transcript source directory       |
-| `PRIVATE_API_TOKEN`         | Shared secret for private API boundary             |
-| `SYNC_TOKEN`                | Webhook authentication (recommended, not required) |
+| Variable                      | Purpose                                                                          |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| `HOSTED`                      | Set to `true` or `1` to enable hosted mode                                       |
+| `PLAYLIST_TRANSCRIPTS_REPO`   | Absolute path to the app-owned transcript git checkout                           |
+| `PRIVATE_API_TOKEN`           | Shared secret for the private API boundary                                       |
+| `SYNC_TOKEN`                  | Refresh webhook authentication for dedicated callers (recommended, not required) |
+| `PLAYLIST_TRANSCRIPTS_BRANCH` | Recommended when the transcript checkout may be detached HEAD                    |
 
 ## Scale validation
 
@@ -80,10 +84,15 @@ At 1000 videos, all benchmarks operate with 25×–250× headroom. The current S
 ## Catalog operations
 
 - Live browse catalog: `data/catalog/catalog.db` by default, or `CATALOG_DB_PATH` when configured
+- Source refresh record: `data/catalog/last-source-refresh.json`
 - Validation report: `data/catalog/last-import-validation.json`
-- Manual validation: `npx tsx scripts/rebuild-catalog.ts --check`
-- Manual publish: `npx tsx scripts/rebuild-catalog.ts`
-- Automated refresh callers: `POST /api/sync-hook` and `scripts/nightly-insights.ts`
+- Manual refresh-only validation: `node --import tsx scripts/refresh-source-catalog.ts --check`
+- Manual refresh-only publish: `node --import tsx scripts/refresh-source-catalog.ts`
+- Legacy catalog-only validation: `npx tsx scripts/rebuild-catalog.ts --check`
+- Legacy catalog-only publish: `npx tsx scripts/rebuild-catalog.ts`
+- Automated refresh callers: `POST /api/sync-hook` or host-local cron/systemd invoking the refresh CLI
+
+Refresh is refresh-only. Analysis remains on-demand and uses separate entrypoints.
 
 ## Analysis runtime operations
 

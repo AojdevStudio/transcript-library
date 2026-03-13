@@ -1,19 +1,28 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const mockRefreshSourceCatalog = vi.fn();
 const mockSubmitRuntimeBatch = vi.fn();
+
+vi.mock("@/lib/source-refresh", () => ({
+  refreshSourceCatalog: mockRefreshSourceCatalog,
+}));
 
 vi.mock("@/lib/runtime-batches", () => ({
   submitRuntimeBatch: mockSubmitRuntimeBatch,
 }));
 
 describe("sync-hook route", () => {
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
     delete process.env.SYNC_TOKEN;
     delete process.env.PRIVATE_API_TOKEN;
   });
 
-  it("rejects unauthorized requests before batch submission", async () => {
+  it("rejects unauthorized requests before refresh begins", async () => {
     process.env.SYNC_TOKEN = "secret-token";
     const { POST } = await import("@/app/api/sync-hook/route");
 
@@ -21,31 +30,34 @@ describe("sync-hook route", () => {
 
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({ ok: false, error: "unauthorized" });
+    expect(mockRefreshSourceCatalog).not.toHaveBeenCalled();
     expect(mockSubmitRuntimeBatch).not.toHaveBeenCalled();
   });
 
-  it("returns the created batch payload and request key for a new submission", async () => {
+  it("returns the refresh record and request key for an updated source refresh", async () => {
     process.env.SYNC_TOKEN = "secret-token";
-    mockSubmitRuntimeBatch.mockReturnValue({
-      outcome: "created",
-      batch: {
-        batchId: "batch-123",
-        source: "sync-hook",
-        counts: {
-          queued: 0,
-          started: 2,
-          pending: 1,
-          skipped: 3,
-          failed: 0,
-          completed: 0,
-        },
-        request: {
-          requestKey: "sync-hook:delivery-123",
-          idempotencyKey: "delivery-123",
-          identityStrategy: "idempotency-key",
-        },
+    mockRefreshSourceCatalog.mockReturnValue({
+      outcome: "updated",
+      phase: "completed",
+      trigger: "sync-hook",
+      request: {
+        requestKey: "sync-hook:delivery-123",
+        idempotencyKey: "delivery-123",
+        identityStrategy: "idempotency-key",
       },
-      items: [{ videoId: "alpha123xyz89" }, { videoId: "beta123xyz89" }],
+      repo: {
+        remote: "origin",
+        branch: "master",
+        headBefore: "abc123",
+        headAfter: "def456",
+        upstreamHead: "def456",
+      },
+      catalog: {
+        version: "catalog-v2",
+        videoCount: 42,
+        partCount: 80,
+        checkOnly: false,
+      },
     });
 
     const { POST } = await import("@/app/api/sync-hook/route");
@@ -63,26 +75,29 @@ describe("sync-hook route", () => {
 
     const body = await response.json();
 
-    expect(response.status).toBe(202);
+    expect(response.status).toBe(200);
     expect(body).toMatchObject({
       ok: true,
-      outcome: "created",
-      itemCount: 2,
-      counts: {
-        started: 2,
-        pending: 1,
-        skipped: 3,
-      },
+      outcome: "updated",
+      phase: "completed",
       request: {
         requestKey: "sync-hook:delivery-123",
         idempotencyKey: "delivery-123",
         identityStrategy: "idempotency-key",
       },
+      repo: {
+        headBefore: "abc123",
+        headAfter: "def456",
+      },
+      catalog: {
+        version: "catalog-v2",
+        videoCount: 42,
+        partCount: 80,
+      },
     });
-    expect(mockSubmitRuntimeBatch).toHaveBeenCalledWith(
+    expect(mockRefreshSourceCatalog).toHaveBeenCalledWith(
       expect.objectContaining({
-        source: "sync-hook",
-        logPrefix: "[sync-hook]",
+        trigger: "sync-hook",
         request: expect.objectContaining({
           requestKey: "sync-hook:delivery-123",
           idempotencyKey: "delivery-123",
@@ -90,30 +105,33 @@ describe("sync-hook route", () => {
         }),
       }),
     );
+    expect(mockSubmitRuntimeBatch).not.toHaveBeenCalled();
   });
 
-  it("reuses an existing batch when the request key is replayed", async () => {
+  it("returns noop refresh outcomes for replayed deliveries without starting analysis", async () => {
     process.env.SYNC_TOKEN = "secret-token";
-    mockSubmitRuntimeBatch.mockReturnValue({
-      outcome: "reused",
-      batch: {
-        batchId: "batch-123",
-        source: "sync-hook",
-        counts: {
-          queued: 0,
-          started: 0,
-          pending: 0,
-          skipped: 4,
-          failed: 0,
-          completed: 0,
-        },
-        request: {
-          requestKey: "sync-hook:delivery-123",
-          idempotencyKey: "delivery-123",
-          identityStrategy: "idempotency-key",
-        },
+    mockRefreshSourceCatalog.mockReturnValue({
+      outcome: "noop",
+      phase: "completed",
+      trigger: "sync-hook",
+      request: {
+        requestKey: "sync-hook:delivery-123",
+        idempotencyKey: "delivery-123",
+        identityStrategy: "idempotency-key",
       },
-      items: [{ videoId: "alpha123xyz89" }],
+      repo: {
+        remote: "origin",
+        branch: "master",
+        headBefore: "def456",
+        headAfter: "def456",
+        upstreamHead: "def456",
+      },
+      catalog: {
+        version: "catalog-v2",
+        videoCount: 42,
+        partCount: 80,
+        checkOnly: false,
+      },
     });
 
     const { POST } = await import("@/app/api/sync-hook/route");
@@ -127,37 +145,48 @@ describe("sync-hook route", () => {
       }),
     );
 
-    const body = await response.json();
-
     expect(response.status).toBe(200);
-    expect(body).toMatchObject({
+    expect(await response.json()).toMatchObject({
       ok: true,
-      outcome: "reused",
-      counts: {
-        skipped: 4,
-      },
+      outcome: "noop",
       request: {
         requestKey: "sync-hook:delivery-123",
-        identityStrategy: "idempotency-key",
+      },
+      repo: {
+        headBefore: "def456",
+        headAfter: "def456",
       },
     });
+    expect(mockSubmitRuntimeBatch).not.toHaveBeenCalled();
   });
 
-  it("accepts PRIVATE_API_TOKEN as a universal override", async () => {
+  it("accepts PRIVATE_API_TOKEN as a universal override and returns failed refresh results honestly", async () => {
     process.env.SYNC_TOKEN = "sync-secret";
     process.env.PRIVATE_API_TOKEN = "private-secret";
-    mockSubmitRuntimeBatch.mockReturnValue({
-      outcome: "created",
-      batch: {
-        batchId: "batch-456",
-        source: "sync-hook",
-        counts: { queued: 0, started: 1, pending: 0, skipped: 0, failed: 0, completed: 0 },
-        request: {
-          requestKey: "sync-hook:fingerprint:abc",
-          identityStrategy: "time-window-fingerprint",
-        },
+    mockRefreshSourceCatalog.mockReturnValue({
+      outcome: "failed",
+      phase: "git-fast-forward",
+      trigger: "sync-hook",
+      request: {
+        requestKey: "sync-hook:fingerprint:abc",
+        identityStrategy: "time-window-fingerprint",
       },
-      items: [{ videoId: "test123xyz89" }],
+      repo: {
+        remote: "origin",
+        branch: "master",
+        headBefore: "abc123",
+        headAfter: "abc123",
+        upstreamHead: "def456",
+      },
+      catalog: {
+        version: "catalog-v1",
+        videoCount: 40,
+        partCount: 76,
+        checkOnly: false,
+      },
+      error: {
+        message: "Not possible to fast-forward, aborting.",
+      },
     });
 
     const { POST } = await import("@/app/api/sync-hook/route");
@@ -172,8 +201,16 @@ describe("sync-hook route", () => {
       }),
     );
 
-    expect(response.status).toBe(202);
+    expect(response.status).toBe(500);
     const body = await response.json();
-    expect(body.ok).toBe(true);
+    expect(body).toMatchObject({
+      ok: false,
+      outcome: "failed",
+      phase: "git-fast-forward",
+      error: {
+        message: "Not possible to fast-forward, aborting.",
+      },
+    });
+    expect(mockSubmitRuntimeBatch).not.toHaveBeenCalled();
   });
 });

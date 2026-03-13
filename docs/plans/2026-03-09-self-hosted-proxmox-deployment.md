@@ -157,6 +157,9 @@ Point mutable state to `/srv/transcript-library`:
 
 - `PLAYLIST_TRANSCRIPTS_REPO=/srv/transcript-library/playlist-transcripts`
 - `INSIGHTS_BASE_DIR=/srv/transcript-library/insights`
+- `CATALOG_DB_PATH=/srv/transcript-library/catalog/catalog.db`
+
+Hosted startup should treat `/srv/transcript-library/playlist-transcripts` as the app-owned local git checkout for refresh-only source sync. The app should not assume directory existence alone means freshness; it should refresh through the supported entrypoints and inspect the resulting evidence files.
 
 ### 4. Cloudflare Tunnel
 
@@ -217,11 +220,32 @@ Clone transcript data into:
 
 - `/srv/transcript-library/playlist-transcripts`
 
-Sync with cron:
+Then refresh through the app-owned refresh contract, not a bare `git pull` cron. Supported entrypoints:
 
 ```bash
-0 * * * * cd /srv/transcript-library/playlist-transcripts && git pull --ff-only
+cd /opt/transcript-library/current
+node --import tsx scripts/refresh-source-catalog.ts
 ```
+
+or:
+
+```http
+POST /api/sync-hook
+Authorization: Bearer <SYNC_TOKEN>
+```
+
+That contract fast-forwards the local checkout, rebuilds SQLite, and writes durable evidence beside the catalog.
+
+Inspect after each refresh with:
+
+```bash
+cat /srv/transcript-library/catalog/last-source-refresh.json
+cat /srv/transcript-library/catalog/last-import-validation.json
+```
+
+Those files live next to `CATALOG_DB_PATH`, so keep the catalog on shared storage rather than inside the release tree.
+
+This is deliberately refresh-only: new videos become browsable after refresh, but analysis remains on-demand.
 
 ### 8. Process Management
 
@@ -240,13 +264,19 @@ If you later switch to standalone output, update the run command to the standalo
 
 ```bash
 # /srv/transcript-library/.env.local
+HOSTED=true
 PLAYLIST_TRANSCRIPTS_REPO=/srv/transcript-library/playlist-transcripts
+PLAYLIST_TRANSCRIPTS_BRANCH=master
+CATALOG_DB_PATH=/srv/transcript-library/catalog/catalog.db
 INSIGHTS_BASE_DIR=/srv/transcript-library/insights
+PRIVATE_API_TOKEN=<strong-random-token>
+SYNC_TOKEN=<strong-random-token>
 ANALYSIS_PROVIDER=claude-cli
 ```
 
 Optional:
 
+- `PLAYLIST_TRANSCRIPTS_REMOTE=origin`
 - `CLAUDE_ANALYSIS_MODEL=...`
 - `ANTHROPIC_API_KEY=...`
 
@@ -276,15 +306,17 @@ Important note:
 10. Create runtime directories under `/opt/transcript-library` and `/srv/transcript-library`
 11. Clone `playlist-transcripts` into `/srv/transcript-library/playlist-transcripts`
 12. Add `/srv/transcript-library/.env.local`
+13. Verify hosted preflight can inspect the checkout as a git repo and that `PLAYLIST_TRANSCRIPTS_BRANCH`, `PRIVATE_API_TOKEN`, and `SYNC_TOKEN` are set for unattended use
 
 ### Phase 3 - First release
 
-13. Create first release directory from a clean clone
-14. Run `npm ci`
-15. Run `npx next build --webpack`
-16. Point `current` symlink at the new release
-17. Start pm2 app from `/opt/transcript-library/current`
-18. Verify app on `http://localhost:3000`
+14. Create first release directory from a clean clone
+15. Run `npm ci`
+16. Run `npx next build --webpack`
+17. Point `current` symlink at the new release
+18. Start pm2 app from `/opt/transcript-library/current`
+19. Verify app on `http://localhost:3000`
+20. Run `node --import tsx scripts/refresh-source-catalog.ts --check` from the current release and confirm `last-source-refresh.json` plus `last-import-validation.json` exist where the hosted runtime expects them
 
 ### Phase 4 - Tunnel and Access
 
@@ -316,10 +348,11 @@ Important note:
 ### Phase 7 - Hardening
 
 31. Add pm2 log rotation
-32. Add transcript sync cron
-33. Test LXC reboot
-34. Test rollback to previous release
-35. Snapshot the LXC
+32. Add a refresh-only cron or systemd timer that runs `node --import tsx scripts/refresh-source-catalog.ts`
+33. Test `POST /api/sync-hook` with `SYNC_TOKEN`
+34. Test LXC reboot
+35. Test rollback to previous release
+36. Snapshot the LXC
 
 ## Pre-Deploy Code Changes
 
@@ -348,16 +381,16 @@ Important note:
 
 ## Risks and Mitigations
 
-| Risk                           | Mitigation                                                 |
-| ------------------------------ | ---------------------------------------------------------- |
-| Production repo becomes dirty  | Never run production from a mutable git worktree           |
-| Deploy fails during pull/build | Build fresh release directory, then swap symlink           |
-| Claude CLI login expires       | Re-auth the runtime user; API key is optional but billable |
-| Build OOM                      | Start with 2 GB, bump if Linux build proves tight          |
-| Transcript repo drift          | Hourly `git pull --ff-only` cron                           |
-| Webhook abuse                  | HMAC verification, dedicated deploy hostname               |
-| Access blocks webhook          | Keep deploy hostname outside OTP Access app                |
-| Rollback is painful            | Keep previous release directory and repoint symlink        |
+| Risk                           | Mitigation                                                                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Production repo becomes dirty  | Never run production from a mutable git worktree                                                                                            |
+| Deploy fails during pull/build | Build fresh release directory, then swap symlink                                                                                            |
+| Claude CLI login expires       | Re-auth the runtime user; API key is optional but billable                                                                                  |
+| Build OOM                      | Start with 2 GB, bump if Linux build proves tight                                                                                           |
+| Transcript repo drift          | Refresh-only cron/webhook using `scripts/refresh-source-catalog.ts` or `POST /api/sync-hook`, plus inspection of `last-source-refresh.json` |
+| Webhook abuse                  | HMAC verification, dedicated deploy hostname                                                                                                |
+| Access blocks webhook          | Keep deploy hostname outside OTP Access app                                                                                                 |
+| Rollback is painful            | Keep previous release directory and repoint symlink                                                                                         |
 
 ## Cost
 

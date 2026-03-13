@@ -260,6 +260,24 @@ export function getVideo(videoId: string): Video | undefined {
   return groupVideos().get(videoId);
 }
 
+export function playlistTranscriptsContentRoot(): string {
+  return path.join(playlistTranscriptsRepoRoot(), "youtube-transcripts");
+}
+
+export function resolveTranscriptPath(filePath: string): string {
+  const repoRoot = playlistTranscriptsRepoRoot();
+  const contentRoot = playlistTranscriptsContentRoot();
+  const baseRoot = filePath.startsWith("youtube-transcripts/") ? repoRoot : contentRoot;
+  const resolved = path.resolve(baseRoot, filePath);
+  const allowedRoot = path.resolve(baseRoot);
+
+  if (resolved !== allowedRoot && !resolved.startsWith(`${allowedRoot}${path.sep}`)) {
+    throw new Error("forbidden");
+  }
+
+  return resolved;
+}
+
 export function absTranscriptPath(filePath: string): string {
-  return path.join(playlistTranscriptsRepoRoot(), "youtube-transcripts", filePath);
+  return resolveTranscriptPath(filePath);
 }

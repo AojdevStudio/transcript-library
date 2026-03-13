@@ -59,7 +59,7 @@ This milestone is complete only when all are true:
 
   > After this: known broken historical videos surface clear rerun-ready state, and repair paths can bring representative drifted artifacts back into a clean runtime state.
 
-- [ ] **S03: Source Repo Sync Contract and Auto-Refresh** `risk:high` `depends:[S01]`
+- [x] **S03: Source Repo Sync Contract and Auto-Refresh** `risk:high` `depends:[S01]`
 
   > After this: a real upstream transcript update flows into the app automatically, with the cross-repo refresh contract documented and enforced clearly enough for unattended use.
 

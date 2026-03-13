@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
-import path from "node:path";
 import { requirePrivateApi } from "@/lib/private-api-guard";
+import { resolveTranscriptPath } from "@/lib/catalog";
 
 export const runtime = "nodejs";
 
@@ -22,16 +22,21 @@ export async function GET(req: Request) {
   const p = url.searchParams.get("path");
   if (!p) return NextResponse.json({ ok: false, error: "missing path" }, { status: 400 });
 
-  const root = process.env.PLAYLIST_TRANSCRIPTS_REPO;
-  if (!root) {
+  if (!process.env.PLAYLIST_TRANSCRIPTS_REPO) {
     return NextResponse.json(
       { ok: false, error: "PLAYLIST_TRANSCRIPTS_REPO not configured" },
       { status: 503 },
     );
   }
-  const resolved = path.resolve(root, p);
-  if (!resolved.startsWith(path.resolve(root) + path.sep)) {
-    return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+
+  let resolved: string;
+  try {
+    resolved = resolveTranscriptPath(p);
+  } catch (error) {
+    if (error instanceof Error && error.message === "forbidden") {
+      return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
+    }
+    throw error;
   }
 
   try {

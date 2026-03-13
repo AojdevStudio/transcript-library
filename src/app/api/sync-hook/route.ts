@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { submitRuntimeBatch, type BatchRequestMetadata } from "@/lib/runtime-batches";
+import type { BatchRequestMetadata } from "@/lib/runtime-batches";
+import { refreshSourceCatalog } from "@/lib/source-refresh";
 import { sanitizePayload } from "@/lib/private-api-guard";
 
 export const runtime = "nodejs";
@@ -73,13 +74,12 @@ function extractRequestIdentity(req: Request, bodyText: string): BatchRequestMet
 
 /**
  * POST /api/sync-hook
- * Webhook handler that triggers a batch analysis pass for all videos that do not
- * yet have an `analysis.md`. Returns immediately after token validation and
- * processes the batch asynchronously so callers with short timeouts do not hang.
+ * Webhook handler that refreshes the local source repo checkout and rebuilds the
+ * SQLite catalog without starting analysis work.
  *
  * @param req - Incoming request. Must carry a valid `Authorization: Bearer` token
  *   matching the `SYNC_TOKEN` environment variable.
- * @returns JSON `{ ok: true }` on success, or a 401 / 503 error response.
+ * @returns JSON describing the refresh result, or a 401 / 503 error response.
  */
 export async function POST(req: Request) {
   const syncToken = process.env.SYNC_TOKEN;
@@ -98,28 +98,37 @@ export async function POST(req: Request) {
 
   const bodyText = await req.text();
   const request = extractRequestIdentity(req, bodyText);
-  const submission = submitRuntimeBatch({
-    source: "sync-hook",
+  const refresh = refreshSourceCatalog({
+    trigger: "sync-hook",
     request,
-    logPrefix: "[sync-hook]",
   });
 
-  console.log("[sync-hook] Batch submission", {
-    outcome: submission.outcome,
-    batchId: submission.batch.batchId,
-    counts: submission.batch.counts,
-    requestKey: submission.batch.request?.requestKey,
+  console.log("[sync-hook] Source refresh", {
+    outcome: refresh.outcome,
+    phase: refresh.phase,
+    requestKey: refresh.request?.requestKey,
+    repo: {
+      branch: refresh.repo.branch,
+      headBefore: refresh.repo.headBefore,
+      headAfter: refresh.repo.headAfter,
+      upstreamHead: refresh.repo.upstreamHead,
+    },
+    catalogVersion: refresh.catalog.version,
   });
+
+  const status = refresh.outcome === "failed" ? 500 : 200;
 
   return NextResponse.json(
     sanitizePayload({
-      ok: true,
-      outcome: submission.outcome,
-      batch: submission.batch,
-      itemCount: submission.items.length,
-      counts: submission.batch.counts,
-      request: submission.batch.request ?? null,
+      ok: refresh.outcome !== "failed",
+      outcome: refresh.outcome,
+      phase: refresh.phase,
+      trigger: refresh.trigger,
+      request: refresh.request ?? null,
+      repo: refresh.repo,
+      catalog: refresh.catalog,
+      error: refresh.error ?? null,
     }),
-    { status: submission.outcome === "created" ? 202 : 200 },
+    { status },
   );
 }
