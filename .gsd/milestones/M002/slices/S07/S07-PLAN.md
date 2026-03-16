@@ -43,7 +43,7 @@ This slice is final assembly, not subsystem invention. The main risk is a false 
 
 ## Tasks
 
-- [ ] **T01: Encode the hosted launch proof contract and evidence evaluator** `est:1h15m`
+- [x] **T01: Encode the hosted launch proof contract and evidence evaluator** `est:1h15m`
   - Why: S07 can only make a trustworthy launch claim if the pass/fail rules for deploy layout, refresh/sweep evidence, access boundaries, and persistent analysis artifacts are explicit and testable before touching the live host.
   - Files: `src/lib/hosted-launch-proof.ts`, `src/lib/__tests__/hosted-launch-proof.test.ts`, `scripts/verify-s07-hosted-launch.ts`
   - Do: Define one evidence bundle shape and verdict helper for S07 that evaluates release layout, pm2/systemd health, source-refresh evidence, daily-sweep evidence, analysis artifact persistence, and the separate human-browser proof status. Add focused Vitest coverage for pass/fail cases, especially missing `tsx`, missing refresh artifacts, analysis files written under `/opt`, and pending manual browser proof. Create the new S07 CLI so it can emit the structured evidence bundle and stable failure reason codes instead of raw shell noise.
