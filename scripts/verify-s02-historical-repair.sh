@@ -77,6 +77,7 @@ fs.rmSync(reconciliation, { force: true });
 console.log(JSON.stringify({ ok: true, videoId, cleared: ['analysis.json', 'reconciliation.json'] }, null, 2));
 NODE
 
+<<<<<<< HEAD
 echo "==> preparing representative rerun-only fixture ${RERUN_VIDEO_ID}"
 RERUN_VIDEO_ID="$RERUN_VIDEO_ID" node <<'NODE'
 const fs = require('fs');
@@ -110,6 +111,8 @@ console.log(JSON.stringify({
 }, null, 2));
 NODE
 
+=======
+>>>>>>> gsd/M002/S02
 echo "==> running historical repair inventory"
 REPAIR_REPORT="$(mktemp)"
 node --import tsx scripts/repair-historical-artifacts.ts --video-id "$REPAIR_VIDEO_ID" --video-id "$RERUN_VIDEO_ID" >"$REPAIR_REPORT"
