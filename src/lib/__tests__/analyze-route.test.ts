@@ -123,6 +123,7 @@ describe("POST /api/analyze", () => {
 
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
+<<<<<<< HEAD
 
   it("allows a clean rerun when reconciliation marks artifacts-without-run as retry-needed", async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "analyze-route-"));
@@ -170,4 +171,6 @@ describe("POST /api/analyze", () => {
 
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
+=======
+>>>>>>> gsd/M002/S01
 });

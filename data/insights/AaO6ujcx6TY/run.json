@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 2,
+  "videoId": "AaO6ujcx6TY",
+  "runId": "20260314164103382-796595",
+  "provider": "claude-cli",
+  "command": "claude",
+  "args": [
+    "--dangerously-skip-permissions",
+    "-p"
+  ],
+  "lifecycle": "failed",
+  "startedAt": "2026-03-14T16:41:04.757Z",
+  "promptResolvedAt": "2026-03-14T16:41:03.383Z",
+  "pid": 72753,
+  "completedAt": "2026-03-14T16:41:21.329Z",
+  "exitCode": 1,
+  "error": "Credit balance is too low",
+  "artifacts": {
+    "structuredFileName": "analysis.json",
+    "canonicalFileName": "analysis.md",
+    "displayFileName": "stealing-10k-website-designs-with-claude-code.md",
+    "metadataFileName": "video-metadata.json",
+    "stdoutFileName": "worker-stdout.txt",
+    "stderrFileName": "worker-stderr.txt",
+    "attemptDirectory": "runs/20260314164103382-796595",
+    "attemptRunFileName": "run.json",
+    "attemptStdoutFileName": "worker-stdout.txt",
+    "attemptStderrFileName": "worker-stderr.txt"
+  },
+  "status": "failed"
+}

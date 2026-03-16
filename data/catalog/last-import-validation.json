@@ -1,11 +1,20 @@
 {
   "schemaVersion": 1,
+<<<<<<< HEAD
   "generatedAt": "2026-03-13T15:29:33.455Z",
   "csvPath": "/Users/ossieirondi/Projects/desktop-commander/repos/playlist-transcripts/youtube-transcripts/index/videos.csv",
   "liveDbPath": "/Users/ossieirondi/Projects/transcript-library/data/catalog/catalog.db",
   "tempDbPath": "/Users/ossieirondi/Projects/transcript-library/data/catalog/catalog.db.tmp-a788f29d6ab1",
   "validationReportPath": "/Users/ossieirondi/Projects/transcript-library/data/catalog/last-import-validation.json",
   "catalogVersion": "917c2fb9e5fd1d49949a57f0bffe354a7dc9bad8202a97bb6bdd50eb28bfcfb4",
+=======
+  "generatedAt": "2026-03-13T03:06:53.724Z",
+  "csvPath": "/Users/ossieirondi/Projects/desktop-commander/repos/playlist-transcripts/youtube-transcripts/index/videos.csv",
+  "liveDbPath": "/Users/ossieirondi/Projects/transcript-library/data/catalog/catalog.db",
+  "tempDbPath": "/Users/ossieirondi/Projects/transcript-library/data/catalog/catalog.db.tmp-eed0c4856d6a",
+  "validationReportPath": "/Users/ossieirondi/Projects/transcript-library/data/catalog/last-import-validation.json",
+  "catalogVersion": "201c12bb2e86e430100653729d6d3aa6a35c12f178124ce5f9daeecb14929bf0",
+>>>>>>> gsd/M002/S01
   "checkOnly": true,
   "valid": true,
   "summary": {

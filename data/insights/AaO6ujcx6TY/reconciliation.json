@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "videoId": "AaO6ujcx6TY",
+  "runId": "20260314164103382-796595",
+  "status": "ok",
+  "resolution": "none",
+  "retryable": false,
+  "checkedAt": "2026-03-14T16:42:42.401Z",
+  "detectedAt": null,
+  "resolvedAt": null,
+  "reasons": [],
+  "artifactState": {
+    "canonicalAnalysis": false,
+    "structuredAnalysis": "missing",
+    "statusFile": true,
+    "runFile": true
+  },
+  "evidence": {
+    "stdoutTail": "Credit balance is too low\n",
+    "stderrTail": ""
+  }
+}

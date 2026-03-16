@@ -6,6 +6,7 @@ Transcript Library is a private internal tool for a small friend group. The grou
 
 ## Core flow
 
+<<<<<<< HEAD
 1. A video is added to the shared playlist and lands in the upstream transcript repo.
 2. Transcript Library refreshes its local `PLAYLIST_TRANSCRIPTS_REPO` checkout through `node --import tsx scripts/refresh-source-catalog.ts` or `POST /api/sync-hook`.
 3. The refresh authority fast-forwards the local checkout, rebuilds SQLite, and writes `data/catalog/last-source-refresh.json` plus `data/catalog/last-import-validation.json`.
@@ -14,6 +15,15 @@ Transcript Library is a private internal tool for a small friend group. The grou
 6. The server resolves metadata, builds a deterministic headless prompt, and launches the configured provider runtime.
 7. The runtime writes status, logs, metadata, run metadata, and markdown artifacts into `data/insights/<videoId>/`.
 8. The app reads those artifacts and renders the analysis alongside the video.
+=======
+1. A video is added to the shared playlist and lands in the transcript repo.
+2. `npx tsx scripts/rebuild-catalog.ts` validates transcript metadata from `PLAYLIST_TRANSCRIPTS_REPO` and atomically publishes `data/catalog/catalog.db`.
+3. A user opens a video page and watches the YouTube video inside the app.
+4. The user starts analysis from the app.
+5. The server resolves metadata, builds a deterministic headless prompt, and launches the configured provider runtime.
+6. The runtime writes status, logs, metadata, run metadata, and markdown artifacts into `data/insights/<videoId>/`.
+7. The app reads those artifacts and renders the analysis alongside the video.
+>>>>>>> gsd/M002/S01
 
 ## Major subsystems
 
@@ -96,6 +106,7 @@ At 1000 videos, all benchmarks operate with 25×–250× headroom. The current S
 - Live browse catalog: `data/catalog/catalog.db` by default, or `CATALOG_DB_PATH` when configured
 - Source refresh record: `data/catalog/last-source-refresh.json`
 - Validation report: `data/catalog/last-import-validation.json`
+<<<<<<< HEAD
 - Manual refresh-only validation: `node --import tsx scripts/refresh-source-catalog.ts --check`
 - Manual refresh-only publish: `node --import tsx scripts/refresh-source-catalog.ts`
 - Legacy catalog-only validation: `npx tsx scripts/rebuild-catalog.ts --check`
@@ -103,6 +114,11 @@ At 1000 videos, all benchmarks operate with 25×–250× headroom. The current S
 - Automated refresh callers: `POST /api/sync-hook` or host-local cron/systemd invoking the refresh CLI
 
 Refresh is refresh-only. Analysis remains on-demand and uses separate entrypoints.
+=======
+- Manual validation: `npx tsx scripts/rebuild-catalog.ts --check`
+- Manual publish: `npx tsx scripts/rebuild-catalog.ts`
+- Automated refresh callers: `POST /api/sync-hook` and `scripts/nightly-insights.ts`
+>>>>>>> gsd/M002/S01
 
 ## Analysis runtime operations
 
