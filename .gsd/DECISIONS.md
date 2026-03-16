@@ -61,3 +61,4 @@
 - "Keep deploy tooling under `deploy/` in the app repo rather than the homelab repo — the pm2 config, deploy scripts, systemd units, and webhook listener are app-specific artifacts that should travel with the release."
 - "Use `pm2 delete` + `pm2 start` rather than `pm2 restart` after deploys to avoid pm2 caching the resolved symlink path from the previous release."
 - "Use `npm ci` for hosted deploys since `package-lock.json` exists — no need to install bun on the LXC."
+- "Center S07 on one machine-verifiable hosted-launch evidence bundle plus an explicit `S07-UAT.md` Cloudflare browser checklist, so synthetic origin checks do not get mistaken for the real friend-facing proof."
