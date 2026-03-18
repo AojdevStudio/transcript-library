@@ -51,4 +51,5 @@ See `.gsd/REQUIREMENTS.md` for the explicit capability contract, requirement sta
 
 - [x] M001: Migration — Harden storage, catalog, runtime, and hosted readiness foundations
 - [ ] M002: Reliability + Hosted Launch — Fix runtime failures, restore sync trust, and launch privately on Proxmox
+- [ ] M004: Event-Driven Sync Integration — Wire playlist-transcripts GitHub Actions to call hosted sync-hook for immediate content propagation
 - [ ] M003: Multi-Playlist Expansion — Add a repeatable multi-source ingest model with configurable collection exposure
