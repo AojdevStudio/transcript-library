@@ -36,8 +36,8 @@ command -v pm2  >/dev/null 2>&1 || die "pm2 is not installed"
 [[ -f "$ENV_FILE" ]] || die ".env.local not found at $ENV_FILE"
 
 # --- Create release directory ------------------------------------------------
-readonly TIMESTAMP
 TIMESTAMP="$(date -u +%Y-%m-%dT%H%M%SZ)"
+readonly TIMESTAMP
 readonly RELEASE_DIR="${RELEASES_DIR}/${TIMESTAMP}"
 
 log "Starting deploy: ref=${GIT_REF} repo=${REPO_URL}"
@@ -51,8 +51,8 @@ git clone --depth 1 --branch "$GIT_REF" "$REPO_URL" "$RELEASE_DIR" \
   || die "git clone failed"
 
 # --- Capture git SHA ---------------------------------------------------------
-readonly GIT_SHA
 GIT_SHA="$(git -C "$RELEASE_DIR" rev-parse HEAD)"
+readonly GIT_SHA
 log "Git SHA: ${GIT_SHA}"
 
 # --- Install dependencies ----------------------------------------------------
@@ -70,8 +70,8 @@ log "Symlinking .env.local into release..."
 ln -sf "$ENV_FILE" "${RELEASE_DIR}/.env.local"
 
 # --- Write deploy manifest ---------------------------------------------------
-readonly NODE_VERSION
 NODE_VERSION="$(node --version)"
+readonly NODE_VERSION
 cat > "${RELEASE_DIR}/deploy-manifest.json" <<EOF
 {
   "timestamp": "${TIMESTAMP}",
