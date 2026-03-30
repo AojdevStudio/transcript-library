@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Composition } from "remotion";
 import { Sequence } from "remotion";
 import { fade } from "@remotion/transitions/fade";

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { AbsoluteFill, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { Img } from "remotion";
 
