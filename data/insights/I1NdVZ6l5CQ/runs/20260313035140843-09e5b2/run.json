@@ -1,11 +1,7 @@
 {
   "schemaVersion": 2,
   "videoId": "I1NdVZ6l5CQ",
-<<<<<<< HEAD
-  "runId": "20260313044805671-5a9690",
-=======
   "runId": "20260313035140843-09e5b2",
->>>>>>> gsd/M002/S02
   "provider": "codex-cli",
   "command": "codex",
   "args": [
@@ -17,16 +13,6 @@
     "--output-schema",
     "/Users/ossieirondi/Projects/transcript-library/src/lib/structured-analysis.schema.json",
     "-o",
-<<<<<<< HEAD
-    "/Users/ossieirondi/Projects/transcript-library/data/insights/I1NdVZ6l5CQ/runs/20260313044805671-5a9690/provider-output.json",
-    "-"
-  ],
-  "lifecycle": "completed",
-  "startedAt": "2026-03-13T04:48:06.971Z",
-  "promptResolvedAt": "2026-03-13T04:48:05.672Z",
-  "pid": 82120,
-  "completedAt": "2026-03-13T04:49:12.705Z",
-=======
     "/Users/ossieirondi/Projects/transcript-library/data/insights/I1NdVZ6l5CQ/runs/20260313035140843-09e5b2/provider-output.json",
     "-"
   ],
@@ -35,7 +21,6 @@
   "promptResolvedAt": "2026-03-13T03:51:40.844Z",
   "pid": 67104,
   "completedAt": "2026-03-13T03:53:07.882Z",
->>>>>>> gsd/M002/S02
   "exitCode": 0,
   "artifacts": {
     "structuredFileName": "analysis.json",
@@ -44,11 +29,7 @@
     "metadataFileName": "video-metadata.json",
     "stdoutFileName": "worker-stdout.txt",
     "stderrFileName": "worker-stderr.txt",
-<<<<<<< HEAD
-    "attemptDirectory": "runs/20260313044805671-5a9690",
-=======
     "attemptDirectory": "runs/20260313035140843-09e5b2",
->>>>>>> gsd/M002/S02
     "attemptRunFileName": "run.json",
     "attemptStdoutFileName": "worker-stdout.txt",
     "attemptStderrFileName": "worker-stderr.txt"

@@ -13,6 +13,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 
+// ---------------------------------------------------------------------------
+// Environment detection
+// ---------------------------------------------------------------------------
+
 export type HostedAccessConfig = {
   cloudflareAccessAud: string | null;
   cloudflareAccessTeamDomain: string | null;
@@ -141,6 +145,24 @@ function validateHostedAccessContract(errors: string[], warnings: string[]) {
   }
 }
 
+/**
+ * Validates the runtime environment and returns a structured result.
+ *
+ * In hosted mode, missing critical env vars produce errors (the deploy should
+ * fail). In local mode, the same gaps produce warnings at most.
+ *
+ * Critical hosted requirements:
+ * - `PLAYLIST_TRANSCRIPTS_REPO` — transcript source directory
+ * - `PRIVATE_API_TOKEN` — shared secret for private API boundary
+ *
+ * Hosted refresh contract checks:
+ * - `PLAYLIST_TRANSCRIPTS_REPO` must resolve to an app-owned git checkout
+ * - detached HEAD requires explicit `PLAYLIST_TRANSCRIPTS_BRANCH`
+ * - operators should have `last-source-refresh.json` and `last-import-validation.json`
+ *
+ * Non-critical but recommended:
+ * - `SYNC_TOKEN` — webhook authentication (warns if missing in hosted mode)
+ */
 export function runPreflight(): PreflightResult {
   const hosted = isHosted();
   const mode = hosted ? "hosted" : "local";

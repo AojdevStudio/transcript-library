@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "source": "yt-dlp",
+  "videoId": "AaO6ujcx6TY",
+  "title": "Stealing $10K Website Designs with Claude Code",
+  "channel": "Chase AI",
+  "topic": "ai-llms",
+  "publishedDate": "2026-02-05",
+  "sourceUrl": "https://youtube.com/watch?v=AaO6ujcx6TY",
+  "durationSeconds": 950,
+  "description": "⚡Build Your AI Agency & Land Your First Client ⚡\nhttps://www.skool.com/chase-ai\n\n🔥 FREE Skool community with 100+ Templates! 🔥 \nhttps://www.skool.com/chase-ai-community\n\n💻 Need custom work? Book a consult 💻\nhttps://chaseai.io\n\nEveryone's using AI to build websites and they all look the same — generic layouts, default components, zero personality. \n\nIn this video I'm breaking down my exact 4-step workflow for building premium websites with Claude Code that actually look like a real designer made them. \n\nStep 1 is inspiration — before you write a single prompt, you go find real websites you want to emulate and use them as your visual reference so Claude has something concrete to work from instead of guessing. \n\nStep 2 is the build — you take that inspiration and let Claude Code scaffold the entire site, feeding it screenshots and specific direction so the output matches your vision from the jump. \n\nStep 3 is refine — this is where you escape the AI slop by using tools like 21st.dev to swap in polished, premium components and tighten up the design details that separate amateur from professional. \n\nAnd Step 4 is deploy — push it live using GitHub and Vercel so you've got a production-ready site in a fraction of the time it would normally take. \n\nNo more cookie-cutter AI sites — this is how you build things people actually stop and look at.\n\n⏰TIMESTAMPS:\n0:00 - Intro\n0:52 - 4 Step Workflow Overview\n2:01 - Step 1: Inspiration\n4:18 - Step 2: Build\n7:19 - Step 3: Refine\n13:10 - Step 4: Deploy\n14:56 - More Resources\n\nRESOURCES FROM THIS VIDEO:\n➡️ Learn More About AI Agents: https://www.skool.com/chase-ai\n➡️ Godly Websites: https://godly.website/\n➡️ 21st.dev: https://21st.dev/\n➡️ Code Pen: https://codepen.io/trending\n\n#ai #claudecode #webdesign",
+  "githubRepos": [],
+  "contentType": "tutorial",
+  "analysisDepth": "standard",
+  "updatedAt": "2026-03-14T16:41:04.729Z"
+}

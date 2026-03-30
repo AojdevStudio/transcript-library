@@ -1,7 +1,11 @@
 {
   "schemaVersion": 2,
   "videoId": "RpUTF_U4kiw",
+<<<<<<< HEAD
   "runId": "20260313031652994-4cbfb9",
+=======
+  "runId": "20260313030655999-9345af",
+>>>>>>> gsd/M002/S01
   "provider": "codex-cli",
   "command": "codex",
   "args": [
@@ -13,6 +17,7 @@
     "--output-schema",
     "/Users/ossieirondi/Projects/transcript-library/src/lib/structured-analysis.schema.json",
     "-o",
+<<<<<<< HEAD
     "/Users/ossieirondi/Projects/transcript-library/data/insights/RpUTF_U4kiw/runs/20260313031652994-4cbfb9/provider-output.json",
     "-"
   ],
@@ -21,6 +26,16 @@
   "promptResolvedAt": "2026-03-13T03:16:52.995Z",
   "pid": 45671,
   "completedAt": "2026-03-13T03:18:03.528Z",
+=======
+    "/Users/ossieirondi/Projects/transcript-library/data/insights/RpUTF_U4kiw/runs/20260313030655999-9345af/provider-output.json",
+    "-"
+  ],
+  "lifecycle": "completed",
+  "startedAt": "2026-03-13T03:06:56.027Z",
+  "promptResolvedAt": "2026-03-13T03:06:56.000Z",
+  "pid": 40068,
+  "completedAt": "2026-03-13T03:08:12.766Z",
+>>>>>>> gsd/M002/S01
   "exitCode": 0,
   "artifacts": {
     "structuredFileName": "analysis.json",
@@ -29,7 +44,11 @@
     "metadataFileName": "video-metadata.json",
     "stdoutFileName": "worker-stdout.txt",
     "stderrFileName": "worker-stderr.txt",
+<<<<<<< HEAD
     "attemptDirectory": "runs/20260313031652994-4cbfb9",
+=======
+    "attemptDirectory": "runs/20260313030655999-9345af",
+>>>>>>> gsd/M002/S01
     "attemptRunFileName": "run.json",
     "attemptStdoutFileName": "worker-stdout.txt",
     "attemptStderrFileName": "worker-stderr.txt"
