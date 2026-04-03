@@ -12,6 +12,40 @@
 
 **Revision notes:** Updated after Codex code review (2026-04-02). Addresses 9 findings (3 critical, 4 high, 2 medium). Restructured into two passes per Codex recommendation.
 
+**Progress (as of 2026-04-03):**
+
+- [x] Task 1: Resolve ALL merge conflicts
+- [x] Task 2: Merge playlist-transcripts via git subtree
+- [x] Task 3: Move GitHub Action to repo root
+- [x] Task 4: Retire source-refresh, update transcript paths
+- [x] Task 5: Create docker-entrypoint.sh
+- [x] Task 6: Create Dockerfile
+- [x] Task 7: Create docker-compose.yaml
+- [x] Task 8: Create .dockerignore
+- [x] Task 9: Create Coolify LXC 105 via community script (Debian 13, 8GB RAM, Docker 29.3.1, Coolify v4.0.0-beta.470)
+- [x] Task 10: Claude CLI auth on LXC 105 — NOT DONE (deploy user created but auth not completed)
+- [x] Task 11: Seed volumes from LXC 101 — NOT DONE
+- [x] Task 12: Connect Coolify to GitHub and deploy — DONE (app running, preflight passing, HTTP 200)
+- [x] Task 13: Configure Coolify cron jobs — NOT DONE
+- [x] Task 14: Wire Cloudflare tunnel — DONE (coolify.aojdevstudio.me + library-canary.aojdevstudio.me)
+- [ ] Task 15: Parallel canary validation (48h)
+- [ ] Task 16: Production cutover
+- [ ] Task 17: Decommission LXC 101
+- [ ] Task 18-20: Multi-playlist (Pass 2, deferred)
+- [x] PR created: AojdevStudio/transcript-library#10
+- [x] CLAUDE.md updated for Coolify architecture
+- [x] README.md updated for unified repo
+
+**Remaining work:**
+
+1. Complete Claude CLI auth on LXC 105 (`npx @anthropic-ai/claude-code login` as deploy user)
+2. Seed volumes with existing insights from LXC 101
+3. Configure 2 Coolify cron jobs (sweep + insights)
+4. Add Cloudflare Access policy for canary hostname
+5. 48h canary validation → production cutover → decommission LXC 101
+6. Favicon (replace default Vercel favicon)
+7. Merge PR after Codex review
+
 ---
 
 ## Pass 1: Core Migration (merge, deploy, cutover)
