@@ -3,6 +3,7 @@ import { Manrope, Fraunces } from "next/font/google";
 import Link from "next/link";
 import { NavHeader } from "@/components/NavHeader";
 import { SearchBar } from "@/components/SearchBar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -17,6 +18,19 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
+const themeInitScript = `
+(() => {
+  try {
+    const key = "transcript-library-theme";
+    const stored = window.localStorage.getItem(key);
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = stored === "dark" || stored === "light" ? stored : systemDark ? "dark" : "light";
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+  } catch {}
+})();
+`;
+
 export const metadata: Metadata = {
   title: "Transcript Library",
   description: "Watch YouTube videos inside the app while reviewing analysis and transcripts.",
@@ -25,21 +39,15 @@ export const metadata: Metadata = {
   },
 };
 
-/**
- * Root application layout — applies global fonts (Manrope body, Fraunces display),
- * wraps every page in a sticky nav header, a centred main content area, and a
- * minimal footer. Also includes a skip-to-content link for keyboard navigation.
- *
- * @param children - Page content rendered inside the `<main>` element.
- */
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${manrope.variable} ${fraunces.variable}`}>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <div className="min-h-dvh bg-[var(--app-bg)] text-[var(--ink)]">
           <a
             href="#main"
@@ -55,7 +63,8 @@ export default function RootLayout({
               </Link>
               <div className="ml-auto flex min-w-0 flex-1 flex-wrap items-center justify-end gap-3">
                 <NavHeader />
-                <SearchBar variant="compact" className="w-full min-[980px]:max-w-[360px]" />
+                <ThemeToggle />
+                <SearchBar variant="compact" className="w-full min-[1100px]:max-w-[320px]" />
               </div>
             </div>
           </header>

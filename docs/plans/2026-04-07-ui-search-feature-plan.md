@@ -274,6 +274,28 @@ V1 filters should include:
 Channel/topic/category filters should be generated from current result data,
 not rendered as permanent empty controls before search.
 
+Current V1 behavior:
+
+- `Channel` is built from the channels present in the current result set
+- `Topic` is built from the topics present in the current result set
+- `Category` is built from the knowledge categories present in the current result set
+- each dropdown uses exact-match filtering on that field
+- all filter controls combine together, so they narrow by intersection
+
+Simple meaning:
+
+- `Channel` mainly narrows video results
+- `Topic` mainly narrows video results
+- `Category` mainly narrows knowledge document results
+- `All` means "do not narrow by this control"
+
+Open product decision:
+
+- confirm whether these controls should stay mixed together for all results, or change based on the active source filter
+- example: if the user selects `Knowledge`, we may want to hide `Channel` and `Topic`
+- example: if the user selects `Transcript` or `Insight`, we may want `Category` hidden unless knowledge results are still relevant
+- we should also confirm whether these should remain result-derived only, or later become global filters with a larger shared taxonomy
+
 ### Result Treatments
 
 **Video treatment**

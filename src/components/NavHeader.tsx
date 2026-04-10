@@ -26,7 +26,7 @@ export function NavHeader() {
           "rounded-xl px-4 py-2 transition",
           active
             ? "bg-[var(--accent-soft)] text-[var(--accent)]"
-            : "hover:bg-black/5 hover:text-[var(--ink)]",
+            : "hover:bg-[var(--panel)] hover:text-[var(--ink)]",
         ].join(" ");
 
         return (

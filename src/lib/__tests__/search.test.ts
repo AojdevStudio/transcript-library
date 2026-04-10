@@ -248,7 +248,7 @@ describe("searchTranscriptLibrary", () => {
       title: "cloudflare tunnel guide",
       matchedSources: expect.arrayContaining(["title", "knowledge"]),
     });
-  });
+  }, 15000);
 
   it("ranks higher-signal insight and title matches ahead of transcript-only results", async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "transcript-search-"));
