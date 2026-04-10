@@ -1,19 +1,17 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { bootstrapCatalogDb } from "@/lib/catalog-db";
-import { __resetCatalogSnapshotForTests } from "@/lib/catalog";
 import { structuredAnalysisPath } from "@/lib/insight-paths";
-import { searchTranscriptLibrary } from "@/lib/search";
 
 const originalPlaylistRepo = process.env.PLAYLIST_TRANSCRIPTS_REPO;
 const originalCatalogDbPath = process.env.CATALOG_DB_PATH;
 const originalInsightsBaseDir = process.env.INSIGHTS_BASE_DIR;
+const tempKnowledgeCategory = "__search_test__";
+const tempKnowledgeCategoryPath = path.join(process.cwd(), "knowledge", tempKnowledgeCategory);
 
 afterEach(() => {
-  __resetCatalogSnapshotForTests();
-
   if (originalPlaylistRepo === undefined) {
     delete process.env.PLAYLIST_TRANSCRIPTS_REPO;
   } else {
@@ -31,10 +29,19 @@ afterEach(() => {
   } else {
     process.env.INSIGHTS_BASE_DIR = originalInsightsBaseDir;
   }
+
+  fs.rmSync(tempKnowledgeCategoryPath, { recursive: true, force: true });
+  vi.resetModules();
 });
 
 function writeTranscriptFile(repoRoot: string, relativePath: string, content: string): void {
   const fullPath = path.join(repoRoot, relativePath);
+  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+  fs.writeFileSync(fullPath, content);
+}
+
+function writeKnowledgeFile(relativePath: string, content: string): void {
+  const fullPath = path.join(tempKnowledgeCategoryPath, relativePath);
   fs.mkdirSync(path.dirname(fullPath), { recursive: true });
   fs.writeFileSync(fullPath, content);
 }
@@ -44,6 +51,7 @@ function writeStructuredInsight(
   videoId: string,
   payload: {
     title: string;
+    summary?: string;
     takeaways?: string[];
     actionItems?: string[];
     notablePoints?: string[];
@@ -58,7 +66,7 @@ function writeStructuredInsight(
         schemaVersion: 1,
         videoId,
         title: payload.title,
-        summary: "Structured search fixture summary.",
+        summary: payload.summary ?? "Structured search fixture summary.",
         takeaways: payload.takeaways ?? [],
         actionItems: payload.actionItems ?? [],
         notablePoints: payload.notablePoints ?? [],
@@ -151,8 +159,13 @@ function seedCatalog(catalogDbPath: string): void {
   db.close();
 }
 
+async function loadSearch() {
+  vi.resetModules();
+  return import("@/lib/search");
+}
+
 describe("searchTranscriptLibrary", () => {
-  it("searches transcript body and structured analysis fields with source-specific matches", () => {
+  it("returns unified grouped results spanning videos and knowledge docs", async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "transcript-search-"));
     const playlistRepo = path.join(tmpDir, "playlist-transcripts");
     const catalogDbPath = path.join(tmpDir, "catalog.db");
@@ -184,6 +197,7 @@ describe("searchTranscriptLibrary", () => {
 
     writeStructuredInsight(insightsBaseDir, "cloud123ab9", {
       title: "Cloudflare Tunnel Setup",
+      summary: "Cloudflare Tunnel protects internal tools while keeping access private.",
       actionItems: ["Set up Cloudflare Tunnel for the staging dashboard."],
       takeaways: ["Internal tools can stay private behind a tunnel."],
     });
@@ -194,30 +208,49 @@ describe("searchTranscriptLibrary", () => {
       notablePoints: ["Retry queue backpressure affects downstream latency."],
     });
 
-    const cloudflareResults = searchTranscriptLibrary("cloudflare tunnel");
-    expect(cloudflareResults).toHaveLength(1);
-    expect(cloudflareResults[0]).toMatchObject({
-      videoId: "cloud123ab9",
-      matchedSources: expect.arrayContaining(["transcript", "action-item"]),
-      hasInsight: true,
+    writeKnowledgeFile(
+      path.join("cloudflare", "cloudflare-tunnel-guide.md"),
+      "# Cloudflare Tunnel Guide\n\nUse Cloudflare Tunnel to expose private dashboards safely.",
+    );
+
+    const { searchTranscriptLibrary } = await loadSearch();
+    const results = searchTranscriptLibrary("cloudflare tunnel");
+
+    expect(results.query).toBe("cloudflare tunnel");
+    expect(results.meta).toMatchObject({ totalResults: 2, usedSemanticLane: false });
+    expect(results.blended).toHaveLength(2);
+    expect(results.grouped.videos).toHaveLength(1);
+    expect(results.grouped.knowledge).toHaveLength(1);
+    expect(results.availableFilters.sources).toEqual(
+      expect.arrayContaining(["title", "transcript", "summary", "action-item", "knowledge"]),
+    );
+    expect(results.availableFilters.channels).toEqual(["Infra Notes"]);
+    expect(results.availableFilters.topics).toEqual(["DevOps"]);
+    expect(results.availableFilters.categories).toEqual([tempKnowledgeCategory]);
+
+    expect(results.grouped.videos[0]).toMatchObject({
+      entityType: "video",
+      title: "Cloudflare Tunnel Setup",
+      channel: "Infra Notes",
+      topic: "DevOps",
+      matchedSources: expect.arrayContaining(["title", "transcript", "summary", "action-item"]),
     });
-    expect(cloudflareResults[0].matches).toEqual(
+    expect(results.grouped.videos[0].topMatches).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ source: "transcript" }),
-        expect.objectContaining({ source: "action-item" }),
+        expect.objectContaining({ source: "title", matchedIn: "Video title" }),
+        expect.objectContaining({ source: "action-item", matchedIn: "Action item" }),
       ]),
     );
 
-    const retryQueueResults = searchTranscriptLibrary("retry queue");
-    expect(retryQueueResults).toHaveLength(1);
-    expect(retryQueueResults[0]).toMatchObject({
-      videoId: "queue123ab9",
-      matchedSources: expect.arrayContaining(["transcript", "takeaway", "notable-point"]),
-      hasInsight: true,
+    expect(results.grouped.knowledge[0]).toMatchObject({
+      entityType: "knowledge",
+      category: tempKnowledgeCategory,
+      title: "cloudflare tunnel guide",
+      matchedSources: expect.arrayContaining(["title", "knowledge"]),
     });
   });
 
-  it("ranks structured action-item matches ahead of transcript-only matches", () => {
+  it("ranks higher-signal insight and title matches ahead of transcript-only results", async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "transcript-search-"));
     const playlistRepo = path.join(tmpDir, "playlist-transcripts");
     const catalogDbPath = path.join(tmpDir, "catalog.db");
@@ -245,9 +278,12 @@ describe("searchTranscriptLibrary", () => {
       actionItems: ["Set up Cloudflare Tunnel for the staging dashboard."],
     });
 
+    const { searchTranscriptLibrary } = await loadSearch();
     const results = searchTranscriptLibrary("cloudflare tunnel");
-    expect(results).toHaveLength(2);
-    expect(results[0].videoId).toBe("cloud123ab9");
-    expect(results[1].videoId).toBe("queue123ab9");
+
+    expect(results.grouped.videos).toHaveLength(2);
+    expect(results.grouped.videos[0].id).toBe("video:cloud123ab9");
+    expect(results.grouped.videos[1].id).toBe("video:queue123ab9");
+    expect(results.blended[0].id).toBe("video:cloud123ab9");
   });
 });

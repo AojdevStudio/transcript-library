@@ -1,6 +1,8 @@
 export {
   searchTranscriptLibrary,
+  type SearchEntityType,
+  type SearchGroup,
   type SearchMatch,
   type SearchMatchSource,
-  type SearchResult,
+  type SearchResponse,
 } from "@/lib/search";

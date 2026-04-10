@@ -10,11 +10,11 @@ type SearchBarProps = {
 
 const copyByVariant = {
   compact: {
-    placeholder: "Search transcripts and analysis",
+    placeholder: "Search videos, transcripts, insights, and knowledge",
     buttonLabel: "Search",
   },
   hero: {
-    placeholder: "Search transcript text, takeaways, action items, or notable points",
+    placeholder: "Search transcript text, insight summaries, action items, and knowledge docs",
     buttonLabel: "Search library",
   },
 } as const;
@@ -33,18 +33,18 @@ export function SearchBar({
       className={cn(
         "flex items-center gap-2",
         variant === "hero"
-          ? "w-full rounded-[28px] border border-[var(--line)] bg-white/70 p-2 shadow-[var(--shadow-card)]"
-          : "w-full",
+          ? "w-full rounded-[28px] border border-[var(--line)] bg-white/75 p-2 shadow-[var(--shadow-card)]"
+          : "w-full rounded-2xl",
         className,
       )}
     >
-      <label htmlFor={`library-search-${variant}`} className="sr-only">
+      <label htmlFor={`search-${variant}`} className="sr-only">
         Search transcript library
       </label>
       <Input
-        id={`library-search-${variant}`}
-        name="q"
+        id={`search-${variant}`}
         type="search"
+        name="q"
         defaultValue={defaultQuery}
         placeholder={copy.placeholder}
         autoFocus={autoFocus}
