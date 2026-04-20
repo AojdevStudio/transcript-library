@@ -33,8 +33,12 @@ PY="$(pick_venv_python)"
 if [ -z "$PY" ] || [ ! -x "$PY" ]; then
   echo "Bootstrapping Python venv (.venv)…"
   python3 -m venv "$REPO/.venv"
-  "$REPO/.venv/bin/pip" install -r "$REQS"
   PY="$(pick_venv_python)"
+  if [ -z "$PY" ] || [ ! -x "$PY" ]; then
+    echo "Could not find a Python executable inside $REPO/.venv/bin after bootstrap" >&2
+    exit 1
+  fi
+  "$PY" -m pip install -r "$REQS"
 fi
 
 if [ -z "$PY" ] || [ ! -x "$PY" ]; then
@@ -51,16 +55,16 @@ fi
 mkdir -p "$INBOX"
 cd "$REPO"
 
-# Per repo directive: sync commits must land on master.
+# Per repo directive: sync commits must land on the default branch.
 CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-if [ "$CURRENT_BRANCH" != "master" ]; then
-  echo "Error: sync_playlist.sh must be run on the master branch (current: $CURRENT_BRANCH)" >&2
-  echo "Tip: git checkout master && git pull --ff-only" >&2
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "Error: sync_playlist.sh must be run on the main branch (current: $CURRENT_BRANCH)" >&2
+  echo "Tip: git checkout main && git pull --ff-only" >&2
   exit 1
 fi
 
-# Ensure master is up to date to avoid pushing non-fast-forward history.
-git pull --ff-only origin master
+# Ensure main is up to date to avoid pushing non-fast-forward history.
+git pull --ff-only origin main
 
 # Bootstrap archive from existing data if missing (prevents re-downloading on fresh clones)
 if [ ! -f "$ARCHIVE" ]; then
@@ -124,7 +128,7 @@ done
 if ! git diff --quiet || ! git diff --cached --quiet; then
   git add -A
   git commit -m "Update playlist transcripts $(date '+%Y-%m-%d %H:%M')" || true
-  git push origin master
+  git push origin main
 
   # Trigger analysis for new videos (fails silently if server isn't running)
   if [ -n "${SYNC_TOKEN:-}" ]; then
