@@ -105,6 +105,7 @@ export function SearchExperience({
 
   const normalizedQuery = query.trim();
   const totalResults = response?.meta.totalResults ?? 0;
+  const isPreQueryState = normalizedQuery.length < MIN_QUERY_LENGTH;
 
   return (
     <div className="space-y-8 pb-16">
@@ -154,7 +155,9 @@ export function SearchExperience({
         )}
       </section>
 
-      <SearchDiscoveryPanel query={normalizedQuery} suggestions={suggestions} />
+      {isPreQueryState && (
+        <SearchDiscoveryPanel query={normalizedQuery} suggestions={suggestions} />
+      )}
 
       {normalizedQuery.length >= MIN_QUERY_LENGTH && !isLoading && totalResults === 0 && (
         <section className="rounded-[28px] border border-[var(--line)] bg-[var(--surface)] p-8 shadow-[var(--shadow-card)]">

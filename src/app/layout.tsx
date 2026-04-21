@@ -3,6 +3,7 @@ import { Manrope, Fraunces } from "next/font/google";
 import Link from "next/link";
 import { NavHeader } from "@/components/NavHeader";
 import { SearchBar } from "@/components/SearchBar";
+import { SearchKeyboardShortcuts } from "@/components/SearchKeyboardShortcuts";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import "./globals.css";
 
@@ -48,6 +49,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${manrope.variable} ${fraunces.variable}`}>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <SearchKeyboardShortcuts />
         <div className="min-h-dvh bg-[var(--app-bg)] text-[var(--ink)]">
           <a
             href="#main"

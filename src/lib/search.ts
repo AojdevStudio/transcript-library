@@ -122,26 +122,50 @@ function buildSnippet(text: string, matchIndex: number, matchLength: number): st
   return `${prefix}${text.slice(start, end).trim()}${suffix}`;
 }
 
-function findTextMatch(
+function findTextMatches(
   source: SearchMatchSource,
   text: string,
   regex: RegExp,
   matchedIn: string,
   { preferWholeText = false }: { preferWholeText?: boolean } = {},
-): SearchMatch | null {
+): SearchMatch[] {
   const searchableText = collapseWhitespace(stripFrontmatter(text));
-  if (!searchableText) return null;
+  if (!searchableText) return [];
 
-  const match = regex.exec(searchableText);
-  if (!match || typeof match.index !== "number") return null;
+  if (preferWholeText) {
+    const match = regex.exec(searchableText);
+    if (!match || typeof match.index !== "number") return [];
 
-  return {
-    source,
-    matchedIn,
-    snippet: preferWholeText
-      ? searchableText
-      : buildSnippet(searchableText, match.index, match[0].length),
-  };
+    return [
+      {
+        source,
+        matchedIn,
+        snippet: searchableText,
+      },
+    ];
+  }
+
+  const globalRegex = new RegExp(
+    regex.source,
+    regex.flags.includes("g") ? regex.flags : `${regex.flags}g`,
+  );
+  const seenSnippets = new Set<string>();
+
+  return Array.from(searchableText.matchAll(globalRegex)).flatMap((match) => {
+    if (typeof match.index !== "number") return [];
+
+    const snippet = buildSnippet(searchableText, match.index, match[0].length);
+    if (seenSnippets.has(snippet)) return [];
+
+    seenSnippets.add(snippet);
+    return [
+      {
+        source,
+        matchedIn,
+        snippet,
+      },
+    ];
+  });
 }
 
 function readTranscriptBody(video: Video): string {
@@ -157,20 +181,17 @@ function readTranscriptBody(video: Video): string {
     .join("\n\n");
 }
 
-function findListMatch(
+function findListMatches(
   source: Extract<SearchMatchSource, "takeaway" | "action-item" | "notable-point">,
   items: string[] | undefined,
   regex: RegExp,
   matchedIn: string,
-): SearchMatch | null {
-  if (!items?.length) return null;
+): SearchMatch[] {
+  if (!items?.length) return [];
 
-  for (const item of items) {
-    const match = findTextMatch(source, item, regex, matchedIn);
-    if (match) return match;
-  }
-
-  return null;
+  return items.flatMap((item) =>
+    findTextMatches(source, item, regex, matchedIn, { preferWholeText: true }),
+  );
 }
 
 function sortMatches(matches: SearchMatch[]): SearchMatch[] {
@@ -202,18 +223,18 @@ function sortGroups(left: RankedGroup, right: RankedGroup): number {
 
 function toVideoGroup(video: Video, regex: RegExp): RankedGroup | null {
   const insight = readCuratedInsight(video.videoId);
-  const matches = sortMatches(
-    [
-      findTextMatch("title", video.title, regex, "Video title", { preferWholeText: true }),
-      findTextMatch("topic", video.topic, regex, "Video topic", { preferWholeText: true }),
-      findTextMatch("channel", video.channel, regex, "Channel", { preferWholeText: true }),
-      findTextMatch("transcript", readTranscriptBody(video), regex, "Transcript"),
-      findTextMatch("summary", insight.curated?.summary ?? "", regex, "Insight summary"),
-      findListMatch("takeaway", insight.curated?.takeaways, regex, "Insight takeaway"),
-      findListMatch("action-item", insight.curated?.actionItems, regex, "Action item"),
-      findListMatch("notable-point", insight.curated?.notablePoints, regex, "Notable point"),
-    ].filter((match): match is SearchMatch => Boolean(match)),
-  );
+  const matches = sortMatches([
+    ...findTextMatches("title", video.title, regex, "Video title", { preferWholeText: true }),
+    ...findTextMatches("topic", video.topic, regex, "Video topic", { preferWholeText: true }),
+    ...findTextMatches("channel", video.channel, regex, "Channel", { preferWholeText: true }),
+    ...findTextMatches("transcript", readTranscriptBody(video), regex, "Transcript"),
+    ...findTextMatches("summary", insight.curated?.summary ?? "", regex, "Insight summary", {
+      preferWholeText: true,
+    }),
+    ...findListMatches("takeaway", insight.curated?.takeaways, regex, "Insight takeaway"),
+    ...findListMatches("action-item", insight.curated?.actionItems, regex, "Action item"),
+    ...findListMatches("notable-point", insight.curated?.notablePoints, regex, "Notable point"),
+  ]);
 
   if (!matches.length) return null;
 
@@ -238,12 +259,10 @@ function toKnowledgeGroup(category: string, relPath: string, regex: RegExp): Ran
   if (!markdown) return null;
 
   const title = titleFromRelPath(relPath);
-  const matches = sortMatches(
-    [
-      findTextMatch("title", title, regex, "Document title", { preferWholeText: true }),
-      findTextMatch("knowledge", markdown, regex, "Knowledge document"),
-    ].filter((match): match is SearchMatch => Boolean(match)),
-  );
+  const matches = sortMatches([
+    ...findTextMatches("title", title, regex, "Document title", { preferWholeText: true }),
+    ...findTextMatches("knowledge", markdown, regex, "Knowledge document"),
+  ]);
 
   if (!matches.length) return null;
 

@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { COMPACT_SEARCH_INPUT_ID, HERO_SEARCH_INPUT_ID } from "@/lib/search-hotkeys";
 
 type SearchBarProps = {
   variant?: "compact" | "hero";
@@ -13,11 +14,13 @@ type SearchBarProps = {
 
 const copyByVariant = {
   compact: {
+    inputId: COMPACT_SEARCH_INPUT_ID,
     placeholder: "Search videos, transcripts, insights, and knowledge",
     buttonLabel: "Search",
     pendingLabel: "Searching",
   },
   hero: {
+    inputId: HERO_SEARCH_INPUT_ID,
     placeholder: "Search transcript text, insight summaries, action items, and knowledge docs",
     buttonLabel: "Search library",
     pendingLabel: "Searching",
@@ -48,11 +51,11 @@ export function SearchBar({
         className,
       )}
     >
-      <label htmlFor={"search-" + variant} className="sr-only">
+      <label htmlFor={copy.inputId} className="sr-only">
         Search transcript library
       </label>
       <Input
-        id={"search-" + variant}
+        id={copy.inputId}
         type="search"
         name="q"
         value={isControlled ? query : undefined}

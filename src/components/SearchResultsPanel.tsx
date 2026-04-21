@@ -174,6 +174,9 @@ function SelectFilter({
 
 function ResultCard({ group, query }: { group: SearchGroup; query: string }) {
   const isKnowledge = group.entityType === "knowledge";
+  const [isExpanded, setIsExpanded] = useState(false);
+  const hasHiddenMatches = group.allMatches.length > group.topMatches.length;
+  const visibleMatches = isExpanded ? group.allMatches : group.topMatches;
 
   return (
     <article
@@ -218,7 +221,7 @@ function ResultCard({ group, query }: { group: SearchGroup; query: string }) {
       </div>
 
       <div className="mt-5 grid gap-3">
-        {group.topMatches.map((match, index) => (
+        {visibleMatches.map((match, index) => (
           <div
             key={`${group.id}-${match.source}-${index}`}
             className="rounded-2xl border border-[var(--line)] bg-[var(--surface-elevated)] p-4"
@@ -236,11 +239,22 @@ function ResultCard({ group, query }: { group: SearchGroup; query: string }) {
         ))}
       </div>
 
-      {group.allMatches.length > group.topMatches.length && (
-        <p className="mt-4 text-xs text-[var(--muted)]">
-          {group.allMatches.length - group.topMatches.length} more matching sections are available
-          for this result.
-        </p>
+      {hasHiddenMatches && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs text-[var(--muted)]">
+            {isExpanded
+              ? `Showing all ${group.allMatches.length} matching sections for this result.`
+              : `${group.allMatches.length - group.topMatches.length} more matching sections are available for this result.`}
+          </p>
+          <button
+            type="button"
+            onClick={() => setIsExpanded((current) => !current)}
+            aria-expanded={isExpanded}
+            className="inline-flex items-center justify-center rounded-2xl border border-[var(--line)] bg-[var(--surface-elevated)] px-4 py-2 text-sm font-medium text-[var(--ink)] transition hover:bg-[var(--panel)]"
+          >
+            {isExpanded ? "Show fewer matches" : `Show all ${group.allMatches.length} matches`}
+          </button>
+        </div>
       )}
     </article>
   );

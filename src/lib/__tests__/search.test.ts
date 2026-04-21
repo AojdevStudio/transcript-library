@@ -286,4 +286,53 @@ describe("searchTranscriptLibrary", () => {
     expect(results.grouped.videos[1].id).toBe("video:queue123ab9");
     expect(results.blended[0].id).toBe("video:cloud123ab9");
   });
+  it("collects multiple transcript matches so result groups can expand beyond the top three", async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "transcript-search-"));
+    const playlistRepo = path.join(tmpDir, "playlist-transcripts");
+    const catalogDbPath = path.join(tmpDir, "catalog.db");
+    const insightsBaseDir = path.join(tmpDir, "insights");
+
+    process.env.PLAYLIST_TRANSCRIPTS_REPO = playlistRepo;
+    process.env.CATALOG_DB_PATH = catalogDbPath;
+    process.env.INSIGHTS_BASE_DIR = insightsBaseDir;
+
+    seedCatalog(catalogDbPath);
+
+    writeTranscriptFile(
+      playlistRepo,
+      path.join("youtube-transcripts", "topics", "devops", "cloudflare-tunnel-setup.md"),
+      "This transcript focuses on private dashboards and tunnel setup.",
+    );
+    writeTranscriptFile(
+      playlistRepo,
+      path.join("youtube-transcripts", "topics", "architecture", "retry-queue-architecture.md"),
+      [
+        "Retry queue runbooks should identify the first owner during incidents and explain how backpressure is detected in production systems.",
+        "Teams should review retry queue dashboards after every deploy so they can catch worker regressions before the backlog grows too large.",
+        "Every retry queue alert should name the affected service and show whether the queue is draining or stalling after a failure spike.",
+        "Strong retry queue ownership reduces confusion when support asks why failed jobs are not clearing after the incident ends.",
+      ].join(" "),
+    );
+
+    writeStructuredInsight(insightsBaseDir, "cloud123ab9", {
+      title: "Cloudflare Tunnel Setup",
+    });
+    writeStructuredInsight(insightsBaseDir, "queue123ab9", {
+      title: "Retry Queue Architecture",
+    });
+
+    const { searchTranscriptLibrary } = await loadSearch();
+    const results = searchTranscriptLibrary("retry queue");
+
+    expect(results.grouped.videos).toHaveLength(1);
+
+    const videoResult = results.grouped.videos[0];
+    const transcriptMatches = videoResult.allMatches.filter(
+      (match) => match.source === "transcript",
+    );
+
+    expect(videoResult.topMatches).toHaveLength(3);
+    expect(videoResult.allMatches.length).toBeGreaterThan(videoResult.topMatches.length);
+    expect(transcriptMatches.length).toBeGreaterThan(3);
+  });
 });
