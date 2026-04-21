@@ -11,15 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -58,16 +59,20 @@ jobs:
       - name: Run sync
         env:
           PYTHONUNBUFFERED: '1'
+          SYNC_GIT_MODE: stage-only
         run: |
           cd pipeline
           ./sync_playlist.sh
 
-      - name: Push changes (if any)
-        run: |
-          if ! git diff --quiet || ! git diff --cached --quiet; then
-            git add -A
-            git commit -m "Update playlist transcripts $(date -u '+%Y-%m-%d %H:%M UTC')" || true
-            git push
-          else
-            echo "No changes to push."
-          fi
+      - name: Create or update pull request
+        uses: peter-evans/create-pull-request@v8
+        with:
+          branch: automation/sync-playlist-transcripts
+          base: main
+          delete-branch: true
+          commit-message: Update playlist transcripts
+          title: Update playlist transcripts
+          body: |
+            Automated playlist transcript sync.
+
+            This PR was opened by GitHub Actions because direct pushes to `main` are blocked by repository rules.

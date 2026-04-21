@@ -63,6 +63,8 @@ if [ -z "$CURRENT_BRANCH" ] || [ "$CURRENT_BRANCH" = "HEAD" ]; then
   exit 1
 fi
 
+SYNC_GIT_MODE="${SYNC_GIT_MODE:-auto}"
+
 # Keep scheduled runs on main and allow workflow_dispatch validation on a fix branch.
 echo "Using git branch: $CURRENT_BRANCH"
 git pull --ff-only origin "$CURRENT_BRANCH"
@@ -128,15 +130,27 @@ done
 # Commit and push if there are changes
 if ! git diff --quiet || ! git diff --cached --quiet; then
   git add -A
-  git commit -m "Update playlist transcripts $(date '+%Y-%m-%d %H:%M')" || true
-  git push origin "$CURRENT_BRANCH"
 
-  # Trigger analysis for new videos (fails silently if server isn't running)
-  if [ -n "${SYNC_TOKEN:-}" ]; then
-    curl --fail-with-body --max-time 10 -s -X POST \
-      -H "Authorization: Bearer ${SYNC_TOKEN}" \
-      http://localhost:3939/api/sync-hook 2>/dev/null || true
-  else
-    echo "(no SYNC_TOKEN set; skipping sync-hook trigger)"
-  fi
+  case "$SYNC_GIT_MODE" in
+    auto)
+      git commit -m "Update playlist transcripts $(date '+%Y-%m-%d %H:%M')" || true
+      git push origin "$CURRENT_BRANCH"
+
+      # Trigger analysis for new videos (fails silently if server isn't running)
+      if [ -n "${SYNC_TOKEN:-}" ]; then
+        curl --fail-with-body --max-time 10 -s -X POST \
+          -H "Authorization: Bearer ${SYNC_TOKEN}" \
+          http://localhost:3939/api/sync-hook 2>/dev/null || true
+      else
+        echo "(no SYNC_TOKEN set; skipping sync-hook trigger)"
+      fi
+      ;;
+    stage-only)
+      echo "Staged transcript updates; leaving commit and PR creation to the caller."
+      ;;
+    *)
+      echo "Error: unsupported SYNC_GIT_MODE '$SYNC_GIT_MODE'" >&2
+      exit 1
+      ;;
+  esac
 fi
